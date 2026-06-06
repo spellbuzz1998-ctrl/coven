@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { Home, Heart, User, ShoppingCart, Search } from 'lucide-react'
+import { Home, Heart, User, ShoppingCart, MessageCircle } from 'lucide-react'
 import { useCart } from '@/lib/cart'
 import { Suspense, useEffect, useState } from 'react'
 
@@ -9,31 +9,31 @@ function NavInner() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const tab = searchParams.get('tab')
-  // All hooks must be called before any conditional return
   const count = useCart(s => s.count())
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
-  // Hide on product detail pages — replaced by floating add-to-cart bar
+  // Hide on product detail pages and messages chat page
   if (pathname.startsWith('/product/')) return null
+  if (pathname === '/account/messages') return null
 
   const displayCount = mounted ? count : 0
 
   function isActive(key: string) {
-    if (key === 'home') return pathname === '/' && !tab
+    if (key === 'home')     return pathname === '/' && !tab
     if (key === 'favorites') return pathname === '/favorites'
-    if (key === 'you') return pathname === '/account'
-    if (key === 'cart') return pathname === '/cart'
-    if (key === 'search') return pathname === '/' && tab === 'items' && !!searchParams.get('q')
+    if (key === 'you')      return pathname.startsWith('/account') && pathname !== '/account/messages'
+    if (key === 'cart')     return pathname === '/cart'
+    if (key === 'messages') return pathname === '/account/messages'
     return false
   }
 
   const items = [
-    { key: 'home',      href: '/',          icon: Home,         label: 'Home' },
-    { key: 'favorites', href: '/favorites', icon: Heart,        label: 'Favorites' },
-    { key: 'you',       href: '/account',   icon: User,         label: 'You' },
-    { key: 'cart',      href: '/cart',      icon: ShoppingCart, label: 'Cart', badge: displayCount },
-    { key: 'search',    href: '/?tab=items',icon: Search,       label: 'Search' },
+    { key: 'home',      href: '/',                    icon: Home,           label: 'Home' },
+    { key: 'favorites', href: '/favorites',           icon: Heart,          label: 'Favorites' },
+    { key: 'you',       href: '/account',             icon: User,           label: 'You' },
+    { key: 'cart',      href: '/cart',                icon: ShoppingCart,   label: 'Cart',     badge: displayCount },
+    { key: 'messages',  href: '/account/messages',   icon: MessageCircle,  label: 'Messages' },
   ]
 
   return (

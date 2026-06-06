@@ -383,6 +383,7 @@ export default function AdminClient({ initialProducts, initialOrders, initialRev
 
 interface AdminConversation {
   user_id: string
+  display_name: string
   last_message: string
   last_at: string
   unread: number
@@ -393,6 +394,7 @@ interface AdminMessage {
   user_id: string
   sender: 'customer' | 'seller'
   body: string
+  image_url?: string | null
   created_at: string
 }
 
@@ -403,7 +405,10 @@ function AdminMessages() {
   const [reply, setReply] = useState('')
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [apiError, setApiError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const threadLengthRef = useRef(0)
+  const isInitialLoadRef = useRef(true)
 
   // Load conversations + auto-refresh every 5s
   useEffect(() => {
@@ -412,28 +417,51 @@ function AdminMessages() {
     return () => clearInterval(timer)
   }, [])
 
-  // Load thread + auto-refresh every 3s when a conversation is open
+  // Reset initial load flag whenever we switch conversations
   useEffect(() => {
     if (!selected) return
+    isInitialLoadRef.current = true
+    threadLengthRef.current = 0
     loadThread(selected)
     const timer = setInterval(() => loadThread(selected), 3000)
     return () => clearInterval(timer)
   }, [selected])
 
+  // Scroll to bottom only when a new message arrives (not on initial load)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (isInitialLoadRef.current) {
+      // First load — don't auto-scroll, let user see from the top
+      isInitialLoadRef.current = false
+    } else if (thread.length > threadLengthRef.current) {
+      // A new message was added — smooth scroll to bottom
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+    threadLengthRef.current = thread.length
   }, [thread])
 
   async function loadConversations() {
-    const res = await fetch('/api/admin/messages')
-    const data = await res.json()
-    if (data.conversations) setConversations(data.conversations)
-    setLoading(false)
+    try {
+      const res = await fetch('/api/admin/messages')
+      const data = await res.json()
+      console.log('[AdminMessages] GET /api/admin/messages →', data)
+      if (data.error) {
+        setApiError(data.error)
+      } else if (data.conversations) {
+        setConversations(data.conversations)
+        setApiError(null)
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setApiError('Fetch failed: ' + msg)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function loadThread(userId: string) {
     const res = await fetch(`/api/admin/messages/${userId}`)
     const data = await res.json()
+    console.log(`[AdminMessages] GET /api/admin/messages/${userId} →`, data)
     if (data.messages) setThread(data.messages)
   }
 
@@ -453,6 +481,17 @@ function AdminMessages() {
   }
 
   if (loading) return <div className="text-center py-8 text-gray-400">Loading messages...</div>
+
+  if (apiError) {
+    return (
+      <div className="text-center py-12">
+        <p className="font-semibold text-red-600 mb-2">API Error</p>
+        <p className="text-sm font-mono bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-left max-w-lg mx-auto">{apiError}</p>
+        <p className="text-xs mt-3" style={{ color: '#6b6670' }}>Check the browser console and server terminal for details.</p>
+        <button onClick={loadConversations} className="mt-4 px-4 py-2 rounded-full text-sm text-white" style={{ backgroundColor: '#1a1040' }}>Retry</button>
+      </div>
+    )
+  }
 
   if (conversations.length === 0) {
     return (
@@ -475,12 +514,12 @@ function AdminMessages() {
             className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
             style={{ backgroundColor: selected === c.user_id ? '#f5f0e8' : 'white', border: `2px solid ${selected === c.user_id ? '#1a1040' : '#e5e7eb'}` }}
           >
-            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-lg font-bold text-white" style={{ backgroundColor: '#1a1040' }}>
-              👤
+            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold text-white" style={{ backgroundColor: '#1a1040' }}>
+              {c.display_name.slice(0, 1).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-0.5">
-                <p className="font-semibold text-xs" style={{ color: '#1a1040' }}>Customer</p>
+                <p className="font-semibold text-xs" style={{ color: '#1a1040' }}>{c.display_name}</p>
                 {c.unread > 0 && (
                   <span className="text-xs font-bold text-white rounded-full w-5 h-5 flex items-center justify-center" style={{ backgroundColor: '#d4760a' }}>
                     {c.unread}
@@ -507,8 +546,10 @@ function AdminMessages() {
           <>
             {/* Thread header */}
             <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3" style={{ backgroundColor: '#f5f0e8' }}>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style={{ backgroundColor: '#1a1040' }}>👤</div>
-              <p className="font-semibold text-sm" style={{ color: '#1a1040' }}>Customer</p>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style={{ backgroundColor: '#1a1040' }}>
+                {(conversations.find(c => c.user_id === selected)?.display_name ?? 'C').slice(0, 1).toUpperCase()}
+              </div>
+              <p className="font-semibold text-sm" style={{ color: '#1a1040' }}>{conversations.find(c => c.user_id === selected)?.display_name ?? 'Customer'}</p>
               <span className="text-xs ml-auto" style={{ color: '#6b6670' }}>{thread.length} message{thread.length !== 1 ? 's' : ''}</span>
             </div>
 
@@ -525,17 +566,23 @@ function AdminMessages() {
                       style={{ backgroundColor: isSeller ? '#c9a84c' : '#1a1040', color: 'white' }}>
                       {isSeller ? '🔮' : '👤'}
                     </div>
-                    <div>
-                      <div className="px-3 py-2 rounded-2xl text-sm max-w-xs"
-                        style={{
-                          backgroundColor: isSeller ? '#1a1040' : '#f5f0e8',
-                          color: isSeller ? 'white' : '#1a1040',
-                          borderBottomRightRadius: isSeller ? 4 : 16,
-                          borderBottomLeftRadius: isSeller ? 16 : 4,
-                        }}>
-                        {msg.body}
-                      </div>
-                      <p className={`text-xs mt-1 ${isSeller ? 'text-right' : ''}`} style={{ color: '#9ca3af' }}>
+                    <div className={`flex flex-col gap-1 max-w-xs ${isSeller ? 'items-end' : 'items-start'}`}>
+                      {msg.image_url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={msg.image_url} alt="Sent image" className="rounded-xl object-cover" style={{ maxWidth: 180 }} />
+                      )}
+                      {msg.body && (
+                        <div className="px-3 py-2 rounded-2xl text-sm"
+                          style={{
+                            backgroundColor: isSeller ? '#1a1040' : '#f5f0e8',
+                            color: isSeller ? 'white' : '#1a1040',
+                            borderBottomRightRadius: isSeller ? 4 : 16,
+                            borderBottomLeftRadius: isSeller ? 16 : 4,
+                          }}>
+                          {msg.body}
+                        </div>
+                      )}
+                      <p className={`text-xs ${isSeller ? 'text-right' : ''}`} style={{ color: '#9ca3af' }}>
                         {new Date(msg.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
