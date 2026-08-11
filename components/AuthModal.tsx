@@ -110,7 +110,13 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { first_name: firstName } },
+        options: {
+          data: { first_name: firstName },
+          // Without this the confirmation link falls back to the project's
+          // Site URL, which points at localhost during development — every
+          // customer would get a link they cannot open.
+          emailRedirectTo: `${window.location.origin}/account`,
+        },
       })
       if (error) { setError(error.message); setLoading(false) }
       else {
