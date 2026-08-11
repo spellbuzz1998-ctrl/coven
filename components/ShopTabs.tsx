@@ -32,8 +32,8 @@ interface Props {
 }
 
 const ABOUT_DEFAULTS = {
-  heading: 'About TheThirteenCoven',
-  body: `Welcome to TheThirteenCoven — a sanctuary of authentic spiritual services rooted in ancient traditions. I am a dedicated practitioner with over six years of experience in spell casting, energy work, and intuitive readings.
+  heading: 'About ThirteenCoven',
+  body: `Welcome to ThirteenCoven — a sanctuary of authentic spiritual services rooted in ancient traditions. I am a dedicated practitioner with over six years of experience in spell casting, energy work, and intuitive readings.
 
 My practice draws from multiple spiritual lineages including Hoodoo, Wicca, Tantra, and West African spiritual traditions. Every ritual I perform is done with intention, care, and respect for the spiritual forces I work with.
 

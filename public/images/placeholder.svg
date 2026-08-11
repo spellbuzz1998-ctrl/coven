@@ -5,5 +5,5 @@
   <circle cx="200" cy="180" r="58" fill="none" stroke="#c9a84c" stroke-width="4"/>
   <circle cx="182" cy="162" r="16" fill="#ffffff" opacity="0.22"/>
   <path d="M164 232 h72 l-10 22 h-52 z" fill="#c9a84c"/>
-  <text x="200" y="300" text-anchor="middle" fill="#c9a84c" font-size="20" font-family="Georgia,serif">TheThirteenCoven</text>
+  <text x="200" y="300" text-anchor="middle" fill="#c9a84c" font-size="20" font-family="Georgia,serif">ThirteenCoven</text>
 </svg>

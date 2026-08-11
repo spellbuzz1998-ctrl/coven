@@ -204,7 +204,7 @@ export default function MessagesClient() {
         </Link>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate" style={{ color: '#1a1040' }}>
-            {displayName} · TheThirteenCoven
+            {displayName} · ThirteenCoven
           </p>
           <p className="text-xs" style={{ color: '#6b6670' }}>Typically responds within a few hours</p>
         </div>

@@ -32,7 +32,7 @@ export default function Header() {
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <Star size={20} className="text-yellow-400 fill-yellow-400" />
           <span className="font-bold text-lg tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
-            TheThirteenCoven
+            ThirteenCoven
           </span>
         </Link>
 

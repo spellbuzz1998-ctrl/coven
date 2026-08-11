@@ -5,7 +5,7 @@ import PolicyDoc from '@/components/PolicyDoc'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Terms & Conditions — TheThirteenCoven' }
+export const metadata = { title: 'Terms & Conditions — ThirteenCoven' }
 
 export default function TermsPage() {
   const override = (getDb().prepare('SELECT value FROM shop_settings WHERE key = ?').get('page_terms') as { value: string } | undefined)?.value

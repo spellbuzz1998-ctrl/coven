@@ -61,7 +61,7 @@ export default function Footer() {
             <Link href="/" className="flex items-center gap-2">
               <Star size={22} className="text-yellow-400 fill-yellow-400" />
               <span className="font-bold text-lg" style={{ fontFamily: 'Georgia, serif' }}>
-                TheThirteenCoven
+                ThirteenCoven
               </span>
             </Link>
             <p className="text-sm text-white/60 mt-3 max-w-xs">
@@ -92,7 +92,7 @@ export default function Footer() {
         {/* Bottom row: socials + copyright */}
         <div className="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-white/50 order-2 sm:order-1">
-            © {new Date().getFullYear()} TheThirteenCoven. All rights reserved.
+            © {new Date().getFullYear()} ThirteenCoven. All rights reserved.
           </p>
           <SocialIcons links={socialLinks} className="order-1 sm:order-2 text-white/70" />
         </div>

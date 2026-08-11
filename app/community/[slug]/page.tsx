@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = article.metaTitle || article.title
   const description = article.metaDescription || article.excerpt || article.title
-  const shopName = getShopSetting('shop_name') || 'TheThirteenCoven'
+  const shopName = getShopSetting('shop_name') || 'ThirteenCoven'
 
   return {
     title: `${title} — ${shopName}`,
@@ -66,7 +66,7 @@ export default async function ArticlePage({ params }: Props) {
   const article = getArticleBySlug(slug)
   if (!article || !article.isPublished) notFound()
 
-  const shopName = getShopSetting('shop_name') || 'TheThirteenCoven'
+  const shopName = getShopSetting('shop_name') || 'ThirteenCoven'
   const relatedArticles = getPublishedArticles(4).filter(a => a.id !== article.id).slice(0, 3)
 
   const jsonLd = {

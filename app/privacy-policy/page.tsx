@@ -5,7 +5,7 @@ import PolicyDoc from '@/components/PolicyDoc'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Privacy Policy — TheThirteenCoven' }
+export const metadata = { title: 'Privacy Policy — ThirteenCoven' }
 
 export default function PrivacyPolicyPage() {
   const override = (getDb().prepare('SELECT value FROM shop_settings WHERE key = ?').get('page_privacy-policy') as { value: string } | undefined)?.value

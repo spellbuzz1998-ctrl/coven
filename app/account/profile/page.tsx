@@ -28,7 +28,7 @@ export default function ProfilePage() {
         </div>
         <h2 className="text-2xl font-bold mb-2" style={{ color: '#1a1040' }}>{firstName}</h2>
         <p className="text-sm mb-4" style={{ color: '#6b6670' }}>
-          Welcome to TheThirteenCoven — a place of magic, healing, and spiritual growth.
+          Welcome to ThirteenCoven — a place of magic, healing, and spiritual growth.
         </p>
 
         {/* Stats */}

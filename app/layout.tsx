@@ -14,12 +14,12 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'TheThirteenCoven — Spell Casting & Spiritual Services',
-    template: '%s | TheThirteenCoven',
+    default: 'ThirteenCoven — Spell Casting & Spiritual Services',
+    template: '%s | ThirteenCoven',
   },
-  description: 'Powerful spell casting, psychic readings, and spiritual services by TheThirteenCoven. Love spells, protection rituals, money magic, and more.',
+  description: 'Powerful spell casting, psychic readings, and spiritual services by ThirteenCoven. Love spells, protection rituals, money magic, and more.',
   openGraph: {
-    siteName: 'TheThirteenCoven',
+    siteName: 'ThirteenCoven',
     type: 'website',
   },
 }

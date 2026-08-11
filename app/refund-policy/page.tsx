@@ -5,7 +5,7 @@ import PolicyDoc from '@/components/PolicyDoc'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Refund Policy — TheThirteenCoven' }
+export const metadata = { title: 'Refund Policy — ThirteenCoven' }
 
 export default function RefundPolicyPage() {
   const override = (getDb().prepare('SELECT value FROM shop_settings WHERE key = ?').get('page_refund-policy') as { value: string } | undefined)?.value

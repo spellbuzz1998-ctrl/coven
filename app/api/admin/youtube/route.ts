@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData()
     const file = formData.get('file') as File
     const title = (formData.get('title') as string) || 'Product Video'
-    const description = (formData.get('description') as string) || 'TheThirteenCoven product video'
+    const description = (formData.get('description') as string) || 'ThirteenCoven product video'
 
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
 
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
         snippet: {
           title,
           description,
-          tags: ['TheThirteenCoven', 'spell', 'reading', 'spiritual'],
+          tags: ['ThirteenCoven', 'spell', 'reading', 'spiritual'],
         },
         status: {
           privacyStatus: 'unlisted',

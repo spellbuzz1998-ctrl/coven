@@ -1020,7 +1020,7 @@ function VideoUrlPicker({ value, onChange }: { value: string; onChange: (url: st
     const fd = new FormData()
     fd.append('file', file)
     fd.append('title', 'Client Testimonial')
-    fd.append('description', 'TheThirteenCoven — Client Testimonial')
+    fd.append('description', 'ThirteenCoven — Client Testimonial')
     const interval = setInterval(() => setProgress(p => Math.min(p + 7, 90)), 800)
     const res = await fetch('/api/admin/youtube', { method: 'POST', body: fd })
     const data = await res.json()
@@ -1307,7 +1307,7 @@ function AdminAbout() {
             type="text"
             className="w-full border rounded-xl px-4 py-2.5 text-sm outline-none"
             style={{ borderColor: '#d1d5db', color: '#1a1040' }}
-            placeholder="About TheThirteenCoven"
+            placeholder="About ThirteenCoven"
             value={heading}
             onChange={e => setHeading(e.target.value)}
           />
@@ -1438,7 +1438,7 @@ function AdminBranding() {
           {bannerUrl
             // eslint-disable-next-line @next/next/no-img-element -- admin-only preview of an already-optimised Cloudinary upload
             ? <img src={bannerUrl} alt="Current shop banner" className="w-full h-full object-cover" />
-            : <p className="text-white/40 text-sm italic">TheThirteenCoven</p>
+            : <p className="text-white/40 text-sm italic">ThirteenCoven</p>
           }
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <p className="text-white text-sm font-semibold flex items-center gap-2"><Upload size={16} /> {uploading === 'banner' ? 'Uploading...' : 'Change banner'}</p>
@@ -1717,7 +1717,7 @@ function AdminMessages() {
                   id="admin-reply"
                   value={reply}
                   onChange={e => setReply(e.target.value)}
-                  placeholder="Reply as TheThirteenCoven…"
+                  placeholder="Reply as ThirteenCoven…"
                   className="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm outline-none focus:border-gray-400"
                 />
                 <button type="submit" disabled={sending || !reply.trim()}
@@ -1782,7 +1782,7 @@ function MediaUploader({
     const fd = new FormData()
     fd.append('file', file)
     fd.append('title', productTitle || 'Product Video')
-    fd.append('description', `TheThirteenCoven — ${productTitle || 'Product Video'}`)
+    fd.append('description', `ThirteenCoven — ${productTitle || 'Product Video'}`)
 
     // Simulate progress (YouTube API doesn't give progress via fetch)
     const progressInterval = setInterval(() => {

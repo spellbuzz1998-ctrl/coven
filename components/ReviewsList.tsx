@@ -101,7 +101,7 @@ export default function ReviewsList({ reviews, averageRating, totalCount }: Prop
 
             {r.sellerResponse && (
               <div className="mt-3 pl-3 border-l-2 border-yellow-400">
-                <p className="text-xs font-semibold mb-0.5" style={{ color: '#c9a84c' }}>Response from TheThirteenCoven</p>
+                <p className="text-xs font-semibold mb-0.5" style={{ color: '#c9a84c' }}>Response from ThirteenCoven</p>
                 <p className="text-xs leading-relaxed" style={{ color: '#374151' }}>{r.sellerResponse}</p>
               </div>
             )}

@@ -5,7 +5,7 @@ import PolicyDoc from '@/components/PolicyDoc'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Disclaimer — TheThirteenCoven' }
+export const metadata = { title: 'Disclaimer — ThirteenCoven' }
 
 export default function DisclaimerPage() {
   const override = (getDb().prepare('SELECT value FROM shop_settings WHERE key = ?').get('page_disclaimer') as { value: string } | undefined)?.value

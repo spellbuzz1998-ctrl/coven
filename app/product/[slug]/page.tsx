@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   return {
     title: product.title,
-    description: description || `${product.title} — spell casting and spiritual services by TheThirteenCoven.`,
+    description: description || `${product.title} — spell casting and spiritual services by ThirteenCoven.`,
     alternates: { canonical: `/product/${product.slug}` },
     openGraph: {
       title: product.title,

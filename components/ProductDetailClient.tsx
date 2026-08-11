@@ -382,7 +382,7 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
             <path d="M15 18l2 2 4-4" stroke="#7c3aed" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <div>
-            <p className="text-sm font-bold mb-0.5" style={{ color: '#1a1040' }}>TheThirteenCoven Buyer Protection</p>
+            <p className="text-sm font-bold mb-0.5" style={{ color: '#1a1040' }}>ThirteenCoven Buyer Protection</p>
             <p className="text-xs leading-relaxed" style={{ color: '#6b6670' }}>
               Shop confidently knowing that if something goes wrong with your order, we&apos;ve got your back. Every purchase is protected by our satisfaction commitment —{' '}
               <a href="/refund-policy" className="underline" style={{ color: '#1a1040' }}>see our refund policy</a>.

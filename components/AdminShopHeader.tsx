@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Save } from 'lucide-react'
 
 const DEFAULTS = {
-  shop_name: 'TheThirteenCoven',
+  shop_name: 'ThirteenCoven',
   shop_tagline: 'Authentic spell casting, readings & spiritual rituals',
   shop_badge: 'Practitioner since 2018',
 }

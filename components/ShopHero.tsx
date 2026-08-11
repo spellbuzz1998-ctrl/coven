@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function ShopHero({ reviewCount, averageRating, salesCount, bannerUrl, avatarUrl, socialLinks = [], shopName, shopTagline, shopBadge }: Props) {
-  const name = shopName || 'TheThirteenCoven'
+  const name = shopName || 'ThirteenCoven'
   const tagline = shopTagline || 'Authentic spell casting, readings & spiritual rituals'
   const badge = shopBadge || 'Practitioner since 2018'
   return (
