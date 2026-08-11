@@ -71,7 +71,7 @@ export default function ShopHero({ reviewCount, averageRating, salesCount, banne
               </span>
               <span className="flex items-center gap-1">
                 <Shield size={14} style={{ color: '#c9a84c' }} />
-                {salesCount.toLocaleString()}+ sales
+                {salesCount.toLocaleString()}+ people helped
               </span>
               <span className="hidden sm:inline">🌙 {badge}</span>
             </div>
