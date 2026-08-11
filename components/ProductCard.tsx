@@ -13,9 +13,10 @@ interface Props {
   product: Product
   saleEndDate?: string | null
   saleDiscount?: number | null
+  priority?: boolean
 }
 
-export default function ProductCard({ product, saleEndDate, saleDiscount }: Props) {
+export default function ProductCard({ product, saleEndDate, saleDiscount, priority }: Props) {
   const salePrice = saleDiscount ? parseFloat((product.price * (1 - saleDiscount / 100)).toFixed(2)) : null
   const displayPrice = salePrice ?? product.price
   const displayOriginal = saleDiscount ? product.price : product.originalPrice
@@ -81,6 +82,7 @@ export default function ProductCard({ product, saleEndDate, saleDiscount }: Prop
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          priority={priority}
         />
         {discount && (
           <div

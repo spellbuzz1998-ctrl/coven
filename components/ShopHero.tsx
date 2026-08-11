@@ -29,7 +29,7 @@ export default function ShopHero({ reviewCount, averageRating, salesCount, banne
         }}
       >
         {bannerUrl ? (
-          <Image src={bannerUrl} alt="Shop banner" fill className="object-cover" />
+          <Image src={bannerUrl} alt="Shop banner" fill className="object-cover" sizes="100vw" priority />
         ) : (
           <>
             <div className="absolute inset-0 opacity-20" style={{

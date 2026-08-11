@@ -20,7 +20,7 @@ export default function ProductGrid({ products, saleEndDate, saleDiscount }: Pro
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       {products.map((p, i) => (
         <div key={p.id} className={`animate-fade-in-up stagger-${Math.min(i + 1, 8)}`}>
-          <ProductCard product={p} saleEndDate={saleEndDate} saleDiscount={saleDiscount} />
+          <ProductCard product={p} saleEndDate={saleEndDate} saleDiscount={saleDiscount} priority={i < 4} />
         </div>
       ))}
     </div>
