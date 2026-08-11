@@ -36,11 +36,24 @@ function AppleIcon() {
   )
 }
 
-const SOCIAL_BUTTONS = [
+const ALL_SOCIAL_BUTTONS = [
   { provider: 'google' as const, label: 'Continue with Google', Icon: GoogleIcon },
   { provider: 'facebook' as const, label: 'Continue with Facebook', Icon: FacebookIcon },
   { provider: 'apple' as const, label: 'Continue with Apple', Icon: AppleIcon },
 ]
+
+// Only offer the providers actually turned on in Supabase. signInWithOAuth
+// navigates the browser straight to Supabase's authorize endpoint, so a
+// disabled provider dead-ends on a raw JSON error page that this modal never
+// gets to catch. Set NEXT_PUBLIC_OAUTH_PROVIDERS (e.g. "google,facebook")
+// once the provider is configured; leave it empty to show email sign-in only.
+const ENABLED_PROVIDERS = new Set(
+  (process.env.NEXT_PUBLIC_OAUTH_PROVIDERS ?? '')
+    .split(',')
+    .map(p => p.trim().toLowerCase())
+    .filter(Boolean)
+)
+const SOCIAL_BUTTONS = ALL_SOCIAL_BUTTONS.filter(b => ENABLED_PROVIDERS.has(b.provider))
 
 export default function AuthModal({ onClose, onSuccess }: Props) {
   const [tab, setTab] = useState<'signin' | 'register'>('signin')
@@ -265,35 +278,39 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
               )}
             </form>
 
-            {/* Divider */}
-            <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-xs font-semibold tracking-widest" style={{ color: '#6b6670' }}>OR</span>
-              <div className="flex-1 h-px bg-gray-200" />
-            </div>
+            {SOCIAL_BUTTONS.length > 0 && (
+              <>
+                {/* Divider */}
+                <div className="flex items-center gap-3 my-4">
+                  <div className="flex-1 h-px bg-gray-200" />
+                  <span className="text-xs font-semibold tracking-widest" style={{ color: '#4b5563' }}>OR</span>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
 
-            {/* Social buttons */}
-            <div className="space-y-2.5">
-              {SOCIAL_BUTTONS.map(({ provider, label, Icon }) => (
-                <button
-                  key={provider}
-                  onClick={() => handleOAuth(provider)}
-                  disabled={!!socialLoading}
-                  className="w-full flex items-center justify-center gap-3 py-3 rounded-full border-2 font-semibold text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-                  style={{ borderColor: '#1a1040', color: '#1a1040', backgroundColor: 'white' }}
-                >
-                  {socialLoading === provider ? (
-                    <span className="text-xs">Redirecting…</span>
-                  ) : (
-                    <><Icon /> {label}</>
-                  )}
-                </button>
-              ))}
-            </div>
+                {/* Social buttons */}
+                <div className="space-y-2.5">
+                  {SOCIAL_BUTTONS.map(({ provider, label, Icon }) => (
+                    <button
+                      key={provider}
+                      onClick={() => handleOAuth(provider)}
+                      disabled={!!socialLoading}
+                      className="w-full flex items-center justify-center gap-3 py-3 rounded-full border-2 font-semibold text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                      style={{ borderColor: '#1a1040', color: '#1a1040', backgroundColor: 'white' }}
+                    >
+                      {socialLoading === provider ? (
+                        <span className="text-xs">Redirecting…</span>
+                      ) : (
+                        <><Icon /> {label}</>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
 
             {/* Footer text */}
             <p className="text-xs mt-5 leading-relaxed" style={{ color: '#4b5563' }}>
-              By clicking Sign in, Register, or Continue with Google, Facebook, or Apple, you agree to our{' '}
+              By clicking Sign in or Register, you agree to our{' '}
               <Link href="/terms" target="_blank" className="underline">Terms of Use</Link> and{' '}
               <Link href="/privacy-policy" target="_blank" className="underline">Privacy Policy</Link>.
             </p>
