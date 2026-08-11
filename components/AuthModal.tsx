@@ -66,7 +66,7 @@ const SOCIAL_BUTTONS = ALL_SOCIAL_BUTTONS.filter(b => ENABLED_PROVIDERS.has(b.pr
 export default function AuthModal({ onClose, onSuccess }: Props) {
   const [tab, setTab] = useState<'signin' | 'register'>('signin')
   const [email, setEmail] = useState('')
-  const [firstName, setFirstName] = useState('')
+  const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [socialLoading, setSocialLoading] = useState<string | null>(null)
@@ -115,7 +115,9 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
         email,
         password,
         options: {
-          data: { first_name: firstName },
+          // Stored as first_name because that is the key the account page,
+          // profile page and admin message list already read.
+          data: { first_name: name.trim() },
           // Without this the confirmation link falls back to the project's
           // Site URL, which points at localhost during development — every
           // customer would get a link they cannot open.
@@ -228,14 +230,14 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
 
               {tab === 'register' && (
                 <div>
-                  <label htmlFor="auth-firstname" className="block text-sm font-semibold mb-1" style={{ color: '#1a1040' }}>
-                    First name <span style={{ color: '#dc2626' }}>*</span>
+                  <label htmlFor="auth-name" className="block text-sm font-semibold mb-1" style={{ color: '#1a1040' }}>
+                    Name <span style={{ color: '#dc2626' }}>*</span>
                   </label>
                   <input
-                    id="auth-firstname"
-                    type="text" required value={firstName}
-                    autoComplete="given-name"
-                    onChange={e => setFirstName(e.target.value)}
+                    id="auth-name"
+                    type="text" required value={name}
+                    autoComplete="name"
+                    onChange={e => setName(e.target.value)}
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-gray-500"
                   />
                 </div>
