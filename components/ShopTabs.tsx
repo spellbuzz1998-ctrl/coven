@@ -184,7 +184,9 @@ export default function ShopTabs({ activeTab, category, query, reviews, reviewCo
             </form>
 
             {/* Category filter dropdown */}
+            <label htmlFor="category-filter" className="sr-only">Filter by category</label>
             <select
+              id="category-filter"
               value={category ?? ''}
               onChange={e => setCategory(e.target.value || undefined)}
               className="px-3 py-2 rounded-full text-xs font-medium border outline-none cursor-pointer"
@@ -198,10 +200,10 @@ export default function ShopTabs({ activeTab, category, query, reviews, reviewCo
           </div>
 
           {loading ? (
-            <div className="text-center py-16" style={{ color: '#6b6670' }} role="status">Loading…</div>
+            <div className="text-center py-16" style={{ color: '#4b5563' }} role="status">Loading…</div>
           ) : loadError ? (
             <div className="text-center py-16" role="alert">
-              <p className="text-sm mb-4" style={{ color: '#6b6670' }}>{loadError}</p>
+              <p className="text-sm mb-4" style={{ color: '#4b5563' }}>{loadError}</p>
               <button
                 onClick={() => setReloadKey(k => k + 1)}
                 className="px-5 py-2.5 rounded-full text-sm font-semibold text-white"

@@ -84,7 +84,7 @@ function ReviewCard({ review }: { review: Review }) {
         &ldquo;{review.body}&rdquo;
       </p>
       {review.purchasedItem && (
-        <p className="text-xs mt-2 italic truncate" style={{ color: '#9ca3af' }}>
+        <p className="text-xs mt-2 italic truncate" style={{ color: '#6b7280' }}>
           {review.purchasedItem}
         </p>
       )}
@@ -150,7 +150,7 @@ export default function VideoTestimonials({ reviews = [] }: Props) {
       <h2 className="text-xl font-bold mb-1" style={{ fontFamily: 'Georgia, serif', color: '#1a1040' }}>
         Client video testimonials
       </h2>
-      <p className="text-sm mb-4" style={{ color: '#6b6670' }}>Real results from real clients</p>
+      <p className="text-sm mb-4" style={{ color: '#4b5563' }}>Real results from real clients</p>
 
       <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
         {testimonials.map(t => (
@@ -172,7 +172,7 @@ export default function VideoTestimonials({ reviews = [] }: Props) {
         </div>
       </div>
 
-      <p className="text-xs mt-3 italic" style={{ color: '#6b6670' }}>
+      <p className="text-xs mt-3 italic" style={{ color: '#4b5563' }}>
         ✦ All testimonials are from verified clients
       </p>
 

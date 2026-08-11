@@ -59,11 +59,11 @@ export default function ShopHero({ reviewCount, averageRating, salesCount, banne
             <h1 className="text-2xl sm:text-3xl font-bold" style={{ fontFamily: 'Georgia, serif', color: '#1a1040' }}>
               {name}
             </h1>
-            <p className="text-sm mt-1" style={{ color: '#6b6670' }}>
+            <p className="text-sm mt-1" style={{ color: '#4b5563' }}>
               {tagline}
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 mt-3 text-sm" style={{ color: '#6b6670' }}>
+            <div className="flex flex-wrap items-center gap-4 mt-3 text-sm" style={{ color: '#4b5563' }}>
               <span className="flex items-center gap-1">
                 <Star size={14} className="fill-yellow-500 text-yellow-500" />
                 <strong className="text-gray-800">{averageRating.toFixed(1)}</strong>
@@ -78,7 +78,7 @@ export default function ShopHero({ reviewCount, averageRating, salesCount, banne
 
             {socialLinks.length > 0 && (
               <div className="flex items-center gap-3 mt-3">
-                <span className="text-xs font-semibold" style={{ color: '#6b6670' }}>Follow along:</span>
+                <span className="text-xs font-semibold" style={{ color: '#4b5563' }}>Follow along:</span>
                 <SocialIcons links={socialLinks} size={18} className="text-[#1a1040]" />
               </div>
             )}

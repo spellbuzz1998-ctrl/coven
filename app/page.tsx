@@ -78,14 +78,14 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             {/* Left: title */}
             <div className="sm:w-48 shrink-0">
               <p className="font-bold text-sm" style={{ color: '#1a1040' }}>Shop policies</p>
-              <p className="text-xs mt-0.5" style={{ color: '#9ca3af' }}>Last updated June 2025</p>
+              <p className="text-xs mt-0.5" style={{ color: '#6b7280' }}>Last updated June 2025</p>
             </div>
 
             {/* Right: content */}
             <div className="flex-1 space-y-5">
               {/* Payment methods */}
               <div>
-                <p className="text-xs font-semibold mb-2" style={{ color: '#6b6670' }}>Accepted payment methods</p>
+                <p className="text-xs font-semibold mb-2" style={{ color: '#4b5563' }}>Accepted payment methods</p>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {['💳 Visa', '💳 Mastercard', '🅿️ PayPal', '🍎 Apple Pay', '🔵 Google Pay'].map(m => (
                     <span key={m} className="text-xs px-2.5 py-1 rounded-md font-medium" style={{ backgroundColor: 'white', color: '#1a1040', border: '1px solid #d1d5db' }}>
@@ -93,7 +93,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
                     </span>
                   ))}
                 </div>
-                <p className="text-xs" style={{ color: '#9ca3af' }}>Secure checkout powered by Stripe</p>
+                <p className="text-xs" style={{ color: '#6b7280' }}>Secure checkout powered by Stripe</p>
               </div>
 
               <div className="border-t" style={{ borderColor: '#e5e7eb' }} />
@@ -102,7 +102,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               <div className="flex gap-4">
                 <div>
                   <p className="text-sm font-semibold mb-1" style={{ color: '#1a1040' }}>Returns & exchanges</p>
-                  <p className="text-xs leading-relaxed" style={{ color: '#6b6670' }}>
+                  <p className="text-xs leading-relaxed" style={{ color: '#4b5563' }}>
                     As all services are digital and performed upon order, we do not offer refunds once the ritual has been started. Please review product details carefully before purchasing. For concerns, message the seller within 48 hours.
                   </p>
                 </div>
@@ -113,7 +113,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               {/* Privacy */}
               <div>
                 <p className="text-sm font-semibold mb-1" style={{ color: '#1a1040' }}>Privacy</p>
-                <p className="text-xs leading-relaxed" style={{ color: '#6b6670' }}>
+                <p className="text-xs leading-relaxed" style={{ color: '#4b5563' }}>
                   All personal information shared for rituals is kept strictly confidential and never shared with third parties.
                 </p>
               </div>
@@ -128,7 +128,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
                   { href: '/refund-policy', label: 'Refund Policy' },
                   { href: '/privacy-policy', label: 'Privacy Policy' },
                 ].map(l => (
-                  <Link key={l.href} href={l.href} className="text-xs hover:underline" style={{ color: '#6b6670' }}>
+                  <Link key={l.href} href={l.href} className="text-xs hover:underline" style={{ color: '#4b5563' }}>
                     {l.label}
                   </Link>
                 ))}

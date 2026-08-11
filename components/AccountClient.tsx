@@ -42,7 +42,7 @@ export default function AccountClient() {
             <Mail size={20} style={{ color: '#d4760a' }} className="shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="font-bold text-sm" style={{ color: '#1a1040' }}>Check your email</p>
-              <p className="text-xs mt-0.5" style={{ color: '#6b6670' }}>We sent a confirmation link. Click it to activate your account, then sign in.</p>
+              <p className="text-xs mt-0.5" style={{ color: '#4b5563' }}>We sent a confirmation link. Click it to activate your account, then sign in.</p>
             </div>
             <button onClick={() => setShowConfirmBanner(false)} className="shrink-0 text-gray-400">
               <X size={16} />
@@ -55,7 +55,7 @@ export default function AccountClient() {
             <User size={36} style={{ color: '#1a1040' }} />
           </div>
           <h1 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Georgia, serif', color: '#1a1040' }}>Your account</h1>
-          <p className="text-sm mb-8" style={{ color: '#6b6670' }}>Sign in to save favorites, track orders, and more.</p>
+          <p className="text-sm mb-8" style={{ color: '#4b5563' }}>Sign in to save favorites, track orders, and more.</p>
           <button onClick={() => setShowModal(true)} className="w-full py-3.5 rounded-full font-bold text-white text-sm mb-3" style={{ backgroundColor: '#1a1040' }}>
             Sign in
           </button>
@@ -88,7 +88,7 @@ export default function AccountClient() {
         </div>
         <div>
           <p className="font-bold text-xl" style={{ color: '#1a1040' }}>{firstName}</p>
-          <p className="text-sm" style={{ color: '#6b6670' }}>{memberSince}</p>
+          <p className="text-sm" style={{ color: '#4b5563' }}>{memberSince}</p>
         </div>
       </div>
 
@@ -118,8 +118,8 @@ export default function AccountClient() {
           </Link>
         ))}
         <button onClick={signOut} className="flex items-center gap-3 px-4 py-4 w-full text-left">
-          <LogOut size={20} style={{ color: '#6b6670' }} />
-          <span className="font-medium text-sm" style={{ color: '#6b6670' }}>Sign out</span>
+          <LogOut size={20} style={{ color: '#4b5563' }} />
+          <span className="font-medium text-sm" style={{ color: '#4b5563' }}>Sign out</span>
         </button>
       </div>
     </div>
