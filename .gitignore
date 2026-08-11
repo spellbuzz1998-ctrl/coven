@@ -43,4 +43,8 @@ next-env.d.ts
 /app/generated/prisma
 
 # local database (contains customer data — never commit)
-/data/
+/data/*.db
+/data/*.db-shm
+/data/*.db-wal
+# seed.json is safe to commit — it contains products/settings, not customer data.
+!/data/seed.json

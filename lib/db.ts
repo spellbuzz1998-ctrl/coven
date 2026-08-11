@@ -42,6 +42,7 @@ export function getDb(): Database.Database {
     _db = new Database(DB_PATH)
     _db.pragma('journal_mode = WAL')
     initSchema(_db)
+    seedIfEmpty(_db)
   }
   return _db
 }
@@ -195,5 +196,44 @@ function initSchema(db: Database.Database) {
   }
   if (!couponCols.find(c => c.name === 'expires_at')) {
     db.exec(`ALTER TABLE coupons ADD COLUMN expires_at TEXT`)
+  }
+}
+
+function seedIfEmpty(db: Database.Database) {
+  const count = (db.prepare('SELECT count(*) as n FROM products').get() as { n: number }).n
+  if (count > 0) return
+
+  const seedPath = path.join(process.cwd(), 'data', 'seed.json')
+  if (!fs.existsSync(seedPath)) return
+
+  let seed: {
+    products?: Record<string, unknown>[]
+    reviews?: Record<string, unknown>[]
+    coupons?: Record<string, unknown>[]
+    settings?: { key: string; value: string; updated_at?: string }[]
+    articles?: Record<string, unknown>[]
+  }
+  try { seed = JSON.parse(fs.readFileSync(seedPath, 'utf-8')) } catch { return }
+
+  const insert = (table: string, rows: Record<string, unknown>[]) => {
+    if (!rows?.length) return
+    const cols = Object.keys(rows[0])
+    const placeholders = cols.map(() => '?').join(', ')
+    const stmt = db.prepare(`INSERT OR IGNORE INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})`)
+    for (const row of rows) stmt.run(...cols.map(c => row[c] ?? null))
+  }
+
+  db.exec('BEGIN')
+  try {
+    insert('products', seed.products || [])
+    insert('reviews', seed.reviews || [])
+    insert('coupons', seed.coupons || [])
+    insert('articles', seed.articles || [])
+    for (const s of seed.settings || []) {
+      db.prepare('INSERT OR IGNORE INTO shop_settings (key, value, updated_at) VALUES (?, ?, ?)').run(s.key, s.value, s.updated_at || new Date().toISOString())
+    }
+    db.exec('COMMIT')
+  } catch {
+    db.exec('ROLLBACK')
   }
 }
