@@ -154,7 +154,7 @@ export default function ShopTabs({ activeTab, category, query, reviews, reviewCo
                 setTab(t.key)
               }
             }}
-            className="px-5 py-3 text-sm font-semibold border-b-2 transition-all duration-200"
+            className="flex-1 py-3 text-sm font-semibold border-b-2 transition-all duration-200 text-center"
             style={{
               borderBottomColor: tab === t.key ? '#1a1040' : 'transparent',
               color: tab === t.key ? '#1a1040' : '#6b6670',
