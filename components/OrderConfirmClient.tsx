@@ -2,13 +2,31 @@
 import { useEffect } from 'react'
 import { useCart } from '@/lib/cart'
 import Link from 'next/link'
-import { CheckCircle, Star } from 'lucide-react'
+import { CheckCircle } from 'lucide-react'
+import { track } from '@/lib/track'
 
 export default function OrderConfirmClient() {
-  const clearCart = useCart(s => s.clearCart)
-
   useEffect(() => {
-    clearCart()
+    // Capture the order value before the cart is emptied, then record the purchase.
+    const store = useCart.getState()
+    track('purchase', { value: store.grandTotal() })
+
+    // Tell the server the payment went through so the order is marked paid
+    // (the server double-checks with Stripe before trusting this).
+    const paymentIntent = new URLSearchParams(window.location.search).get('payment_intent')
+    if (paymentIntent) {
+      fetch('/api/order/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentIntentId: paymentIntent }),
+      }).catch(() => {
+        // The order is still recorded server-side; the buyer sees success either way.
+      })
+    }
+
+    // Read from the store directly so this effect has no changing dependencies
+    // and can never clear the cart twice.
+    store.clearCart()
   }, [])
 
   return (
@@ -45,7 +63,7 @@ export default function OrderConfirmClient() {
           className="px-6 py-3 rounded-full font-semibold border-2"
           style={{ borderColor: '#1a1040', color: '#1a1040' }}
         >
-          Contact seller
+          Contact
         </a>
       </div>
     </div>

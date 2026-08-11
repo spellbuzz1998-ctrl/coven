@@ -11,6 +11,137 @@ body {
   box-sizing: border-box;
 }
 
+/* Many inputs use `outline-none` for styling; this restores a visible focus
+   indicator for keyboard users without bringing back the mouse-click outline. */
+:focus-visible {
+  outline: 2px solid #1a1040;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Skip link — hidden until focused. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 300;
+  padding: 0.75rem 1.25rem;
+  background-color: #1a1040;
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 0 0 0.5rem 0;
+}
+.skip-link:focus {
+  left: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.35s ease-out both;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.4s ease-out both;
+}
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+.stagger-7 { animation-delay: 0.35s; }
+.stagger-8 { animation-delay: 0.4s; }
+
+/* Smooth hover lift for cards */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+/* Button press effect */
+.btn-press {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-press:hover {
+  transform: translateY(-1px);
+}
+.btn-press:active {
+  transform: translateY(1px);
+}
+
+/* Pulse for notification badges */
+@keyframes pulse-subtle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 0.4s ease-in-out;
+}
+
+/* Favorite heart — hide until card hover or saved */
+.group button[title*="favorites"] {
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.group:hover button[title*="favorites"],
+button[title="Remove from favorites"] {
+  opacity: 1 !important;
+  transform: scale(1);
+}
+button[title*="favorites"]:hover {
+  transform: scale(1.1) !important;
+}
+
+/* Smooth image reveal */
+img {
+  transition: opacity 0.3s ease;
+}
+
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;

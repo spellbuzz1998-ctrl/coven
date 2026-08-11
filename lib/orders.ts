@@ -85,6 +85,43 @@ export function getOrderById(id: string): Order | null {
   }
 }
 
+// Attach the customer's email to a not-yet-paid order. Called while the buyer is
+// still on the checkout page, so digital orders can always be delivered even when
+// the payment method (PayPal, Klarna, wallets) never hands us an email itself.
+export function updateOrderEmail(id: string, email: string): void {
+  const db = getDb()
+  db.prepare("UPDATE orders SET customer_email = ?, updated_at = ? WHERE id = ? AND status = 'pending'")
+    .run(email, new Date().toISOString(), id)
+}
+
+// Re-price a pending order in place instead of leaving an orphan row behind
+// every time the cart or coupon changes on the checkout page.
+export function replacePendingOrder(id: string, data: {
+  total: number
+  couponCode?: string
+  discountAmount?: number
+  items: { productId: string; quantity: number; price: number; personalization?: string }[]
+}): Order | null {
+  const db = getDb()
+  const existing = db.prepare("SELECT status FROM orders WHERE id = ?").get(id) as { status: string } | undefined
+  if (!existing || existing.status !== 'pending') return null
+
+  const now = new Date().toISOString()
+  const tx = db.transaction(() => {
+    db.prepare('UPDATE orders SET total = ?, coupon_code = ?, discount_amount = ?, updated_at = ? WHERE id = ?')
+      .run(data.total, data.couponCode ?? null, data.discountAmount ?? 0, now, id)
+    db.prepare('DELETE FROM order_items WHERE order_id = ?').run(id)
+    for (const item of data.items) {
+      db.prepare(`
+        INSERT INTO order_items (id, order_id, product_id, quantity, price, personalization)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(randomUUID(), id, item.productId, item.quantity, item.price, item.personalization ?? null)
+    }
+  })
+  tx()
+  return getOrderById(id)
+}
+
 export function updateOrderPayment(id: string, stripePaymentId: string, status: string): void {
   const db = getDb()
   db.prepare('UPDATE orders SET stripe_payment_id = ?, status = ?, updated_at = ? WHERE id = ?').run(stripePaymentId, status, new Date().toISOString(), id)

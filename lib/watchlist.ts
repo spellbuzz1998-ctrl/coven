@@ -12,10 +12,12 @@ export interface WatchlistItem {
 
 export async function getWatchlist(): Promise<WatchlistItem[]> {
   const supabase = createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('watchlist')
     .select('*')
     .order('created_at', { ascending: false })
+  // Surface the failure so the UI can show a retry instead of an empty list.
+  if (error) throw error
   return data ?? []
 }
 
@@ -28,7 +30,15 @@ export async function addToWatchlist(item: Omit<WatchlistItem, 'id' | 'user_id' 
 
 export async function removeFromWatchlist(productSlug: string) {
   const supabase = createClient()
-  return supabase.from('watchlist').delete().eq('product_slug', productSlug)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not logged in')
+  // Scope the delete to the signed-in user rather than relying on the row-level
+  // security policy alone to stop one account deleting another's saved items.
+  return supabase
+    .from('watchlist')
+    .delete()
+    .eq('product_slug', productSlug)
+    .eq('user_id', user.id)
 }
 
 export async function isInWatchlist(productSlug: string): Promise<boolean> {

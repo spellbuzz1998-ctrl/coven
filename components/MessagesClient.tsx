@@ -1,10 +1,11 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from './AuthProvider'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
 import { ArrowLeft, Send, Camera, X } from 'lucide-react'
-import Image from 'next/image'
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // 5 MB
 
 interface Message {
   id: string
@@ -24,12 +25,43 @@ export default function MessagesClient() {
   const [fetching, setFetching] = useState(true)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
+  const [sendError, setSendError] = useState('')
+  const [loadError, setLoadError] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  // Track object URLs and timers so they can be released on unmount.
+  const previewUrlRef = useRef<string | null>(null)
+  const scrollTimers = useRef<ReturnType<typeof setTimeout>[]>([])
   const supabase = createClient()
 
+  const scheduleScroll = useCallback((behavior: ScrollBehavior, delay: number) => {
+    const id = setTimeout(() => bottomRef.current?.scrollIntoView({ behavior }), delay)
+    scrollTimers.current.push(id)
+  }, [])
+
+  const fetchMessages = useCallback(async () => {
+    // Yield first so this never sets state synchronously inside the effect
+    // body that calls it.
+    await Promise.resolve()
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .order('created_at', { ascending: true })
+    if (error) {
+      setLoadError('We could not load your messages right now.')
+    } else {
+      setLoadError('')
+      setMessages(data ?? [])
+    }
+    setFetching(false)
+    scheduleScroll('instant' as ScrollBehavior, 80)
+  }, [supabase, scheduleScroll])
+
   useEffect(() => {
-    if (!user) { setFetching(false); return }
+    if (!user) return
+    // Synchronising with Supabase (an external system) is the intended use of an
+    // effect. State writes happen after an await and the channel is torn down below.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchMessages()
 
     const channel = supabase
@@ -38,72 +70,108 @@ export default function MessagesClient() {
         event: 'INSERT', schema: 'public', table: 'messages',
         filter: `user_id=eq.${user.id}`
       }, (payload) => {
-        setMessages(prev => [...prev, payload.new as Message])
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+        const incoming = payload.new as Message
+        // Realtime can echo a message we just inserted — de-duplicate by id.
+        setMessages(prev => prev.some(m => m.id === incoming.id) ? prev : [...prev, incoming])
+        scheduleScroll('smooth', 50)
       })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [user])
+  }, [user, supabase, fetchMessages, scheduleScroll])
 
-  async function fetchMessages() {
-    const { data } = await supabase
-      .from('messages')
-      .select('*')
-      .order('created_at', { ascending: true })
-    setMessages(data ?? [])
-    setFetching(false)
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'instant' as ScrollBehavior }), 80)
-  }
+  // Release the preview blob URL and any pending scroll timers on unmount.
+  useEffect(() => {
+    const timers = scrollTimers.current
+    return () => {
+      timers.forEach(clearTimeout)
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    }
+  }, [])
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setSendError('')
+    if (!file.type.startsWith('image/')) {
+      setSendError('Please choose an image file.')
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setSendError('That image is larger than 5 MB. Please pick a smaller one.')
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+    // Revoke the previous preview before replacing it, or the blob leaks.
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    const url = URL.createObjectURL(file)
+    previewUrlRef.current = url
     setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
+    setImagePreview(url)
   }
 
   function removeImage() {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current)
+      previewUrlRef.current = null
+    }
     setImageFile(null)
     setImagePreview(null)
     if (fileRef.current) fileRef.current.value = ''
   }
 
   async function uploadImage(file: File): Promise<string | null> {
-    const ext = file.name.split('.').pop()
+    const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
     const path = `${user!.id}/${Date.now()}.${ext}`
     const { error } = await supabase.storage.from('message-images').upload(path, file)
-    if (error) { console.error('Image upload error:', error.message); return null }
+    if (error) return null
     const { data } = supabase.storage.from('message-images').getPublicUrl(path)
     return data.publicUrl
   }
 
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault()
+    // Guard against Enter-key and button submitting the same message twice.
+    if (sending) return
     if ((!newMsg.trim() && !imageFile) || !user) return
     setSending(true)
+    setSendError('')
 
     let image_url: string | null = null
     if (imageFile) {
       image_url = await uploadImage(imageFile)
+      if (!image_url) {
+        setSendError('Your image could not be uploaded. Please try again.')
+        setSending(false)
+        return
+      }
     }
 
-    await supabase.from('messages').insert({
+    const { error } = await supabase.from('messages').insert({
       user_id: user.id,
       sender: 'customer',
       body: newMsg.trim() || '',
       image_url,
     })
 
+    if (error) {
+      // Keep the text in the box so the customer doesn't lose what they wrote.
+      setSendError('Your message could not be sent. Please try again.')
+      setSending(false)
+      return
+    }
+
     setNewMsg('')
     removeImage()
     setSending(false)
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    scheduleScroll('smooth', 50)
   }
 
-  if (loading || fetching) {
+  // Only signed-in visitors wait on the message request.
+  if (loading || (user && fetching)) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#f5f0e8' }}>
+      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#f5f0e8' }} role="status" aria-label="Loading messages">
         <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#1a1040' }} />
       </div>
     )
@@ -142,23 +210,23 @@ export default function MessagesClient() {
         </div>
       </div>
 
-      {/* Pinned product card */}
-      <div className="mx-4 mt-3 mb-1 flex items-center gap-3 rounded-2xl px-3 py-2.5 bg-white shrink-0"
-        style={{ border: '1px solid #e5e7eb' }}>
-        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-gray-100">
-          <Image src="/images/placeholder.jpg" alt="Product" width={48} height={48} className="object-cover w-full h-full" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs font-medium truncate" style={{ color: '#1a1040' }}>Reconciliation Spell for Avoidant Partner...</p>
-          <p className="text-xs mt-0.5 font-semibold" style={{ color: '#c9a84c' }}>$15.00 USD</p>
-        </div>
-      </div>
-
       {/* Messages thread */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
-        {messages.length === 0 && (
+        {loadError && (
+          <div className="text-center py-6" role="alert">
+            <p className="text-sm mb-3" style={{ color: '#b91c1c' }}>{loadError}</p>
+            <button
+              onClick={() => { setFetching(true); fetchMessages() }}
+              className="px-4 py-2 rounded-full text-xs font-semibold text-white"
+              style={{ backgroundColor: '#1a1040' }}
+            >
+              Try again
+            </button>
+          </div>
+        )}
+        {!loadError && messages.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-sm" style={{ color: '#6b6670' }}>No messages yet. Say hello! 👋</p>
+            <p className="text-sm" style={{ color: '#4b5563' }}>No messages yet. Say hello! 👋</p>
           </div>
         )}
         {messages.map(msg => {
@@ -217,18 +285,23 @@ export default function MessagesClient() {
 
       {/* Input bar */}
       <div className="px-3 py-3 shrink-0 bg-white border-t" style={{ borderColor: '#e5e7eb' }}>
+        {sendError && (
+          <p className="text-xs mb-2 px-1" style={{ color: '#b91c1c' }} role="alert">{sendError}</p>
+        )}
         <form onSubmit={sendMessage} className="flex items-center gap-2">
           <button type="button" onClick={() => fileRef.current?.click()}
+            aria-label="Attach an image"
             className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
             style={{ backgroundColor: '#f5f0e8' }}>
-            <Camera size={18} style={{ color: '#6b6670' }} />
+            <Camera size={18} style={{ color: '#4b5563' }} aria-hidden="true" />
           </button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
+          <label htmlFor="message-input" className="sr-only">Write a message</label>
           <input
+            id="message-input"
             value={newMsg}
             onChange={e => setNewMsg(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(e as unknown as React.FormEvent) } }}
             placeholder="Write a message"
             className="flex-1 rounded-full px-4 py-2.5 text-sm outline-none"
             style={{ backgroundColor: '#f5f0e8', border: '1px solid #e5e7eb', color: '#1a1040' }}
@@ -236,9 +309,10 @@ export default function MessagesClient() {
 
           <button type="submit"
             disabled={sending || (!newMsg.trim() && !imageFile)}
-            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 disabled:opacity-40"
+            aria-label="Send message"
+            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ backgroundColor: '#1a1040' }}>
-            <Send size={16} className="text-white" />
+            <Send size={16} className="text-white" aria-hidden="true" />
           </button>
         </form>
       </div>

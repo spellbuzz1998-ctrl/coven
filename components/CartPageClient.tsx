@@ -6,23 +6,41 @@ import { Trash2, Minus, Plus, ShoppingBag } from 'lucide-react'
 import { useState } from 'react'
 
 export default function CartPageClient() {
-  const { items, removeItem, updateQuantity, total } = useCart()
+  const { items, removeItem, updateQuantity, total, listSubtotal, saleDiscount, discountAmount, coupon: appliedCoupon, setCoupon: setAppliedCoupon } = useCart()
   const [coupon, setCoupon] = useState('')
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null)
   const [couponError, setCouponError] = useState('')
+  const [couponBusy, setCouponBusy] = useState(false)
 
   const subtotal = total()
-  const discount = appliedCoupon ? Math.round(subtotal * appliedCoupon.discount / 100 * 100) / 100 : 0
+  const itemsTotal = listSubtotal()
+  const sale = saleDiscount()
+  const discount = discountAmount()
   const orderTotal = subtotal - discount
 
   async function applyCoupon() {
+    const code = coupon.trim()
+    // Guard against empty codes and against a second click while one is in flight.
+    if (!code || couponBusy) return
+    setCouponBusy(true)
     setCouponError('')
-    const res = await fetch(`/api/coupon?code=${coupon}`)
-    const data = await res.json()
-    if (data.valid) {
-      setAppliedCoupon({ code: coupon, discount: data.amount })
-    } else {
-      setCouponError('Invalid coupon code')
+    try {
+      const res = await fetch(`/api/coupon?code=${encodeURIComponent(code)}`)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setCouponError('Could not check that code. Please try again.')
+      } else if (data.valid) {
+        setAppliedCoupon({ code, discount: data.amount, type: data.type === 'fixed' ? 'fixed' : 'percentage' })
+      } else if (data.reason === 'expired') {
+        setCouponError('That code has expired.')
+      } else if (data.reason === 'used_up') {
+        setCouponError('That code has reached its usage limit.')
+      } else {
+        setCouponError('That coupon code is not valid.')
+      }
+    } catch {
+      setCouponError('Could not check that code. Please check your connection.')
+    } finally {
+      setCouponBusy(false)
     }
   }
 
@@ -55,7 +73,7 @@ export default function CartPageClient() {
           {items.map(item => (
             <div key={item.id} className="flex gap-4 p-4 bg-white rounded-xl shadow-sm">
               <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-gray-100">
-                <Image src={item.image} alt={item.title} fill className="object-cover" sizes="80px" />
+                <Image src={item.image || '/images/placeholder.jpg'} alt={item.title} fill className="object-cover" sizes="80px" />
               </div>
               <div className="flex-1 min-w-0">
                 <Link href={`/product/${item.slug}`} className="font-medium text-sm hover:underline line-clamp-2" style={{ color: '#1a1040' }}>
@@ -78,7 +96,14 @@ export default function CartPageClient() {
                     </button>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-bold text-sm">${(item.price * item.quantity).toFixed(2)}</span>
+                    {item.listPrice && item.listPrice > item.price ? (
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-xs line-through" style={{ color: '#9ca3af' }}>${(item.listPrice * item.quantity).toFixed(2)}</span>
+                        <span className="font-bold text-sm text-green-600">${(item.price * item.quantity).toFixed(2)}</span>
+                      </span>
+                    ) : (
+                      <span className="font-bold text-sm">${(item.price * item.quantity).toFixed(2)}</span>
+                    )}
                     <button onClick={() => removeItem(item.id)} className="text-gray-400 hover:text-red-500 transition-colors">
                       <Trash2 size={15} />
                     </button>
@@ -96,10 +121,16 @@ export default function CartPageClient() {
           <div className="space-y-2 text-sm mb-4">
             <div className="flex justify-between">
               <span style={{ color: '#6b6670' }}>Item(s) total</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>${itemsTotal.toFixed(2)}</span>
             </div>
+            {sale > 0 && (
+              <div className="flex justify-between text-green-600 font-medium">
+                <span>Shop sale discount</span>
+                <span>-${sale.toFixed(2)}</span>
+              </div>
+            )}
             {discount > 0 && (
-              <div className="flex justify-between" style={{ color: '#d4760a' }}>
+              <div className="flex justify-between text-green-600 font-medium">
                 <span>Coupon ({appliedCoupon?.code})</span>
                 <span>-${discount.toFixed(2)}</span>
               </div>
@@ -108,40 +139,55 @@ export default function CartPageClient() {
               <span style={{ color: '#6b6670' }}>Shipping</span>
               <span className="text-green-600 font-medium">Free</span>
             </div>
-            <div className="border-t border-gray-200 pt-2 flex justify-between font-bold">
-              <span>Total</span>
+            <div className="border-t border-gray-200 pt-3 flex justify-between font-bold text-base">
+              <span>Estimated total</span>
               <span>${orderTotal.toFixed(2)}</span>
             </div>
           </div>
 
+          {/* Klarna */}
+          <p className="text-xs mb-4" style={{ color: '#6b6670' }}>
+            Pay over time with <strong style={{ color: '#1a1040' }}>Klarna</strong>. ⓘ
+          </p>
+
           {/* Coupon */}
           <div className="mb-4">
             <div className="flex gap-2">
+              <label htmlFor="cart-coupon" className="sr-only">Coupon code</label>
               <input
+                id="cart-coupon"
                 type="text"
                 placeholder="Coupon code"
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none"
+                className="flex-1 border rounded-lg px-3 py-2 text-sm outline-none"
+                style={{ borderColor: couponError ? '#dc2626' : '#d1d5db' }}
                 value={coupon}
-                onChange={e => setCoupon(e.target.value.toUpperCase())}
+                onChange={e => { setCoupon(e.target.value.toUpperCase()); setCouponError('') }}
               />
               <button
                 onClick={applyCoupon}
-                className="px-3 py-2 text-sm rounded-lg font-medium text-white"
+                disabled={couponBusy || !coupon.trim()}
+                className="px-3 py-2 text-sm rounded-lg font-medium text-white disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{ backgroundColor: '#c9a84c' }}
               >
-                Apply
+                {couponBusy ? 'Checking…' : 'Apply'}
               </button>
             </div>
-            {couponError && <p className="text-xs text-red-500 mt-1">{couponError}</p>}
-            {appliedCoupon && <p className="text-xs text-green-600 mt-1">✓ Coupon applied! Try WELCOME10</p>}
+            {couponError && <p className="text-xs mt-1" style={{ color: '#dc2626' }} role="alert">{couponError}</p>}
+            {appliedCoupon && !couponError && (
+              <p className="text-xs mt-1 flex items-center gap-2" style={{ color: '#15803d' }}>
+                ✓ {appliedCoupon.code} applied
+                <button onClick={() => setAppliedCoupon(null)} className="underline" style={{ color: '#6b6670' }}>Remove</button>
+              </p>
+            )}
           </div>
 
+          {/* Go to checkout */}
           <Link
             href={`/checkout${appliedCoupon ? `?coupon=${appliedCoupon.code}` : ''}`}
             className="block w-full py-3 rounded-full font-bold text-center text-white"
             style={{ backgroundColor: '#1a1040' }}
           >
-            Proceed to checkout
+            Go to checkout
           </Link>
         </div>
       </div>

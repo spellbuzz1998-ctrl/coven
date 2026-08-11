@@ -5,6 +5,20 @@ import AuthModal from './AuthModal'
 import Link from 'next/link'
 import { ShoppingBag, Star, Gift, MapPin, MessageCircle, Bell, User, HelpCircle, ChevronRight, LogOut, X, Mail } from 'lucide-react'
 
+const GRID_ITEMS = [
+  { href: '/account/purchases', icon: ShoppingBag, label: 'Purchases' },
+  { href: '/?tab=reviews', icon: Star, label: 'Reviews' },
+  { href: '/favorites', icon: Gift, label: 'Favorites' },
+  { href: '/account/profile', icon: MapPin, label: 'Manage profile' },
+]
+
+const LIST_ITEMS = [
+  { href: '/account/messages', icon: MessageCircle, label: 'Messages' },
+  { href: '/account/updates', icon: Bell, label: 'Updates' },
+  { href: '/account/profile', icon: User, label: 'Profile' },
+  { href: '/account/help', icon: HelpCircle, label: 'Help & Support' },
+]
+
 export default function AccountClient() {
   const { user, loading, signOut } = useAuth()
   const [showModal, setShowModal] = useState(false)
@@ -65,20 +79,6 @@ export default function AccountClient() {
   const years = Math.floor(months / 12)
   const memberSince = years >= 1 ? `${years} year${years > 1 ? 's' : ''} as a member` : `${months || 1} month${months !== 1 ? 's' : ''} as a member`
 
-  const gridItems = [
-    { href: '/account/purchases', icon: ShoppingBag, label: 'Purchases' },
-    { href: '/?tab=reviews', icon: Star, label: 'Reviews' },
-    { href: '/favorites', icon: Gift, label: 'Favorites' },
-    { href: '/account/profile', icon: MapPin, label: 'Manage profile' },
-  ]
-
-  const listItems = [
-    { href: '/account/messages', icon: MessageCircle, label: 'Messages', dot: false },
-    { href: '/account/updates', icon: Bell, label: 'Updates', dot: false },
-    { href: '/account/profile', icon: User, label: 'Profile', dot: false },
-    { href: '/account/help', icon: HelpCircle, label: 'Help & Support', dot: false },
-  ]
-
   return (
     <div className="max-w-md mx-auto px-4 py-6 pb-32">
       {/* Profile header */}
@@ -94,7 +94,7 @@ export default function AccountClient() {
 
       {/* 2x2 grid */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        {gridItems.map(({ href, icon: Icon, label }) => (
+        {GRID_ITEMS.map(({ href, icon: Icon, label }) => (
           <Link
             key={label}
             href={href}
@@ -108,16 +108,13 @@ export default function AccountClient() {
 
       {/* List items */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
-        {listItems.map(({ href, icon: Icon, label, dot }) => (
+        {LIST_ITEMS.map(({ href, icon: Icon, label }) => (
           <Link key={label} href={href} className="flex items-center justify-between px-4 py-4">
             <div className="flex items-center gap-3">
-              <Icon size={20} style={{ color: '#1a1040' }} />
+              <Icon size={20} style={{ color: '#1a1040' }} aria-hidden="true" />
               <span className="font-medium text-sm" style={{ color: '#1a1040' }}>{label}</span>
             </div>
-            <div className="flex items-center gap-2">
-              {dot && <span className="w-2 h-2 rounded-full bg-red-500" />}
-              <ChevronRight size={16} style={{ color: '#6b6670' }} />
-            </div>
+            <ChevronRight size={16} style={{ color: '#4b5563' }} aria-hidden="true" />
           </Link>
         ))}
         <button onClick={signOut} className="flex items-center gap-3 px-4 py-4 w-full text-left">

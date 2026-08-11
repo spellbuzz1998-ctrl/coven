@@ -1,5 +1,5 @@
 'use client'
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import type { User, Session } from '@supabase/supabase-js'
 
@@ -25,29 +25,49 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  // createClient() returns a new object each call; memoise it so the effect
+  // below isn't torn down and re-subscribed on every render.
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let active = true
+
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (!active) return
+        setSession(session)
+        setUser(session?.user ?? null)
+        setLoading(false)
+      })
+      .catch(() => {
+        // Never leave the whole app stuck behind a permanent loading state.
+        if (active) setLoading(false)
+      })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-    })
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
-    return () => subscription.unsubscribe()
-  }, [])
-
-  async function signOut() {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut()
-  }
+  }, [supabase])
+
+  // Stable context value so every consumer doesn't re-render on each provider render.
+  const value = useMemo(
+    () => ({ user, session, loading, signOut }),
+    [user, session, loading, signOut]
+  )
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )

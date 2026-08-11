@@ -17,11 +17,25 @@ export interface Product {
   variants?: ProductVariant[]
   category: string
   images: string[]
+  video?: string
+  saleEndsAt?: string
   personalizationPrompt?: string
   isDigital: boolean
   isActive: boolean
   createdAt: string
   updatedAt: string
+}
+
+// A single malformed JSON column would otherwise throw and take down every page
+// that lists products, so fall back to an empty array instead.
+function parseJsonArray<T>(raw: unknown): T[] {
+  if (typeof raw !== 'string' || !raw.trim()) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
 }
 
 function rowToProduct(row: Record<string, unknown>): Product {
@@ -33,8 +47,10 @@ function rowToProduct(row: Record<string, unknown>): Product {
     price: row.price as number,
     originalPrice: row.original_price as number | undefined,
     category: row.category as string,
-    images: JSON.parse((row.images as string) || '[]'),
-    variants: JSON.parse((row.variants as string | undefined) ?? '[]'),
+    images: parseJsonArray<string>(row.images),
+    video: (row.video as string) || '',
+    saleEndsAt: (row.sale_ends_at as string) || undefined,
+    variants: parseJsonArray<ProductVariant>(row.variants),
     personalizationPrompt: row.personalization_prompt as string | undefined,
     isDigital: Boolean(row.is_digital),
     isActive: Boolean(row.is_active),
@@ -90,9 +106,9 @@ export function createProduct(data: Omit<Product, 'id' | 'createdAt' | 'updatedA
   const id = randomUUID()
   const now = new Date().toISOString()
   db.prepare(`
-    INSERT INTO products (id, slug, title, description, price, original_price, variants, category, images, personalization_prompt, is_digital, is_active, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, data.slug, data.title, data.description, data.price, data.originalPrice ?? null, JSON.stringify(data.variants ?? []), data.category, JSON.stringify(data.images), data.personalizationPrompt ?? null, data.isDigital ? 1 : 0, data.isActive ? 1 : 0, now, now)
+    INSERT INTO products (id, slug, title, description, price, original_price, variants, category, images, video, sale_ends_at, personalization_prompt, is_digital, is_active, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, data.slug, data.title, data.description, data.price, data.originalPrice ?? null, JSON.stringify(data.variants ?? []), data.category, JSON.stringify(data.images), data.video ?? '', data.saleEndsAt ?? null, data.personalizationPrompt ?? null, data.isDigital ? 1 : 0, data.isActive ? 1 : 0, now, now)
   return getProductById(id)!
 }
 
@@ -108,6 +124,8 @@ export function updateProduct(id: string, data: Partial<Omit<Product, 'id' | 'cr
       original_price = ?,
       category = COALESCE(?, category),
       images = COALESCE(?, images),
+      video = COALESCE(?, video),
+      sale_ends_at = ?,
       variants = COALESCE(?, variants),
       personalization_prompt = ?,
       is_digital = COALESCE(?, is_digital),
@@ -116,10 +134,13 @@ export function updateProduct(id: string, data: Partial<Omit<Product, 'id' | 'cr
     WHERE id = ?
   `).run(
     data.slug ?? null, data.title ?? null, data.description ?? null, data.price ?? null,
-    data.originalPrice !== undefined ? data.originalPrice : undefined,
-    data.category ?? null, data.images ? JSON.stringify(data.images) : null,
+    data.originalPrice ?? null,
+    data.category ?? null,
+    data.images ? JSON.stringify(data.images) : null,
+    data.video ?? null,
+    data.saleEndsAt ?? null,
     data.variants !== undefined ? JSON.stringify(data.variants) : null,
-    data.personalizationPrompt !== undefined ? data.personalizationPrompt : undefined,
+    data.personalizationPrompt ?? null,
     data.isDigital !== undefined ? (data.isDigital ? 1 : 0) : null,
     data.isActive !== undefined ? (data.isActive ? 1 : 0) : null,
     now, id

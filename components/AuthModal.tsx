@@ -1,6 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 
 interface Props {
@@ -35,6 +36,12 @@ function AppleIcon() {
   )
 }
 
+const SOCIAL_BUTTONS = [
+  { provider: 'google' as const, label: 'Continue with Google', Icon: GoogleIcon },
+  { provider: 'facebook' as const, label: 'Continue with Facebook', Icon: FacebookIcon },
+  { provider: 'apple' as const, label: 'Continue with Apple', Icon: AppleIcon },
+]
+
 export default function AuthModal({ onClose, onSuccess }: Props) {
   const [tab, setTab] = useState<'signin' | 'register'>('signin')
   const [email, setEmail] = useState('')
@@ -43,46 +50,95 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false)
   const [socialLoading, setSocialLoading] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [resetSent, setResetSent] = useState(false)
   const supabase = createClient()
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  // Close on Escape and keep background content from scrolling behind the modal.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    dialogRef.current?.focus()
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [onClose])
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault()
+    if (loading) return
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError(error.message); setLoading(false) }
-    else onSuccess()
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) { setError(error.message); setLoading(false) }
+      else onSuccess()
+    } catch {
+      setError('Could not sign in. Please check your connection and try again.')
+      setLoading(false)
+    }
   }
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
+    if (loading) return
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { first_name: firstName } },
-    })
-    if (error) { setError(error.message); setLoading(false) }
-    else {
-      // Close modal immediately — show confirmation banner outside
-      onSuccess('confirm')
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { first_name: firstName } },
+      })
+      if (error) { setError(error.message); setLoading(false) }
+      else {
+        // Close modal immediately — show confirmation banner outside
+        onSuccess('confirm')
+      }
+    } catch {
+      setError('Could not create your account. Please check your connection and try again.')
+      setLoading(false)
     }
   }
 
   async function handleOAuth(provider: 'google' | 'facebook' | 'apple') {
+    if (socialLoading) return
     setSocialLoading(provider)
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo: `${window.location.origin}/account` },
-    })
+    setError('')
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: `${window.location.origin}/account` },
+      })
+      // On success the browser navigates away; only a failure lands back here.
+      if (error) { setError(error.message); setSocialLoading(null) }
+    } catch {
+      setError('Could not reach the sign-in provider. Please try again.')
+      setSocialLoading(null)
+    }
   }
 
-  const socialButtons = [
-    { provider: 'google' as const, label: 'Continue with Google', icon: <GoogleIcon /> },
-    { provider: 'facebook' as const, label: 'Continue with Facebook', icon: <FacebookIcon /> },
-    { provider: 'apple' as const, label: 'Continue with Apple', icon: <AppleIcon /> },
-  ]
+  async function handleForgotPassword() {
+    if (!email) {
+      setError('Enter your email address above first, then tap "Forgot your password?".')
+      return
+    }
+    setError('')
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/account`,
+      })
+      if (error) setError(error.message)
+      else setResetSent(true)
+    } catch {
+      setError('Could not send the reset email. Please try again.')
+    }
+  }
 
   return (
     <div
@@ -91,7 +147,12 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 pb-10 sm:pb-6 overflow-y-auto max-h-[95vh]"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={tab === 'signin' ? 'Sign in' : 'Create your account'}
+        tabIndex={-1}
+        className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 pb-10 sm:pb-6 overflow-y-auto max-h-[95vh] outline-none"
         onClick={e => e.stopPropagation()}
       >
         {/* Handle bar (mobile) */}
@@ -112,8 +173,8 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
                 Register
               </button>
             )}
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-              <X size={20} />
+            <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600">
+              <X size={20} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -126,11 +187,13 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
           <>
             <form onSubmit={tab === 'signin' ? handleSignIn : handleRegister} className="space-y-3 mb-4">
               <div>
-                <label className="block text-sm font-semibold mb-1" style={{ color: '#1a1040' }}>
-                  Email address {tab === 'register' && <span className="text-red-500">*</span>}
+                <label htmlFor="auth-email" className="block text-sm font-semibold mb-1" style={{ color: '#1a1040' }}>
+                  Email address {tab === 'register' && <span style={{ color: '#dc2626' }}>*</span>}
                 </label>
                 <input
+                  id="auth-email"
                   type="email" required value={email}
+                  autoComplete="email"
                   onChange={e => setEmail(e.target.value)}
                   className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-gray-500"
                 />
@@ -138,11 +201,13 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
 
               {tab === 'register' && (
                 <div>
-                  <label className="block text-sm font-semibold mb-1" style={{ color: '#1a1040' }}>
-                    First name <span className="text-red-500">*</span>
+                  <label htmlFor="auth-firstname" className="block text-sm font-semibold mb-1" style={{ color: '#1a1040' }}>
+                    First name <span style={{ color: '#dc2626' }}>*</span>
                   </label>
                   <input
+                    id="auth-firstname"
                     type="text" required value={firstName}
+                    autoComplete="given-name"
                     onChange={e => setFirstName(e.target.value)}
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-gray-500"
                   />
@@ -150,11 +215,13 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
               )}
 
               <div>
-                <label className="block text-sm font-semibold mb-1" style={{ color: '#1a1040' }}>
-                  Password {tab === 'register' && <span className="text-red-500">*</span>}
+                <label htmlFor="auth-password" className="block text-sm font-semibold mb-1" style={{ color: '#1a1040' }}>
+                  Password {tab === 'register' && <span style={{ color: '#dc2626' }}>*</span>}
                 </label>
                 <input
+                  id="auth-password"
                   type="password" required value={password}
+                  autoComplete={tab === 'signin' ? 'current-password' : 'new-password'}
                   onChange={e => setPassword(e.target.value)}
                   className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-gray-500"
                 />
@@ -166,14 +233,20 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
                     <input type="checkbox" defaultChecked className="rounded" />
                     Stay signed in
                   </label>
-                  <button type="button" className="text-sm underline" style={{ color: '#6b6670' }}>
+                  <button type="button" onClick={handleForgotPassword} className="text-sm underline" style={{ color: '#4b5563' }}>
                     Forgot your password?
                   </button>
                 </div>
               )}
 
+              {resetSent && (
+                <p className="text-sm px-3 py-2 rounded-lg" style={{ color: '#15803d', backgroundColor: '#f0fdf4' }} role="status">
+                  Password reset link sent — check your email.
+                </p>
+              )}
+
               {error && (
-                <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+                <p className="text-sm px-3 py-2 rounded-lg" style={{ color: '#b91c1c', backgroundColor: '#fef2f2' }} role="alert">{error}</p>
               )}
 
               <button
@@ -185,9 +258,9 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
               </button>
 
               {tab === 'signin' && (
-                <p className="text-center text-xs" style={{ color: '#6b6670' }}>
+                <p className="text-center text-xs" style={{ color: '#4b5563' }}>
                   Trouble signing in?{' '}
-                  <button type="button" className="underline">Get help</button>
+                  <a href="mailto:hello@thirteencoven.com?subject=Help%20signing%20in" className="underline">Get help</a>
                 </p>
               )}
             </form>
@@ -201,39 +274,39 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
 
             {/* Social buttons */}
             <div className="space-y-2.5">
-              {socialButtons.map(({ provider, label, icon }) => (
+              {SOCIAL_BUTTONS.map(({ provider, label, Icon }) => (
                 <button
                   key={provider}
                   onClick={() => handleOAuth(provider)}
                   disabled={!!socialLoading}
-                  className="w-full flex items-center justify-center gap-3 py-3 rounded-full border-2 font-semibold text-sm transition-all disabled:opacity-60"
+                  className="w-full flex items-center justify-center gap-3 py-3 rounded-full border-2 font-semibold text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ borderColor: '#1a1040', color: '#1a1040', backgroundColor: 'white' }}
                 >
                   {socialLoading === provider ? (
-                    <span className="text-xs">Redirecting...</span>
+                    <span className="text-xs">Redirecting…</span>
                   ) : (
-                    <>{icon} {label}</>
+                    <><Icon /> {label}</>
                   )}
                 </button>
               ))}
             </div>
 
             {/* Footer text */}
-            <p className="text-xs mt-5 leading-relaxed" style={{ color: '#6b6670' }}>
+            <p className="text-xs mt-5 leading-relaxed" style={{ color: '#4b5563' }}>
               By clicking Sign in, Register, or Continue with Google, Facebook, or Apple, you agree to our{' '}
-              <span className="underline cursor-pointer">Terms of Use</span> and{' '}
-              <span className="underline cursor-pointer">Privacy Policy</span>.
+              <Link href="/terms" target="_blank" className="underline">Terms of Use</Link> and{' '}
+              <Link href="/privacy-policy" target="_blank" className="underline">Privacy Policy</Link>.
             </p>
 
             {tab === 'signin' ? (
-              <p className="text-center text-sm mt-3" style={{ color: '#6b6670' }}>
+              <p className="text-center text-sm mt-3" style={{ color: '#4b5563' }}>
                 New customer?{' '}
                 <button onClick={() => { setTab('register'); setError('') }} className="font-semibold underline" style={{ color: '#1a1040' }}>
                   Create an account
                 </button>
               </p>
             ) : (
-              <p className="text-center text-sm mt-3" style={{ color: '#6b6670' }}>
+              <p className="text-center text-sm mt-3" style={{ color: '#4b5563' }}>
                 Already have an account?{' '}
                 <button onClick={() => { setTab('signin'); setError('') }} className="font-semibold underline" style={{ color: '#1a1040' }}>
                   Sign in
@@ -246,4 +319,3 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
     </div>
   )
 }
-
