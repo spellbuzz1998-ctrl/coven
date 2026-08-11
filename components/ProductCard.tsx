@@ -118,7 +118,6 @@ export default function ProductCard({ product, saleEndDate, saleDiscount, priori
 
       {/* Info */}
       <div className="flex-1 flex flex-col">
-        <p className="text-xs mb-1" style={{ color: '#6b6670' }}>TheThirteenCoven</p>
         <p className="text-sm font-medium leading-snug line-clamp-2 mb-1" style={{ color: '#1a1040' }}>
           {product.title}
         </p>
