@@ -1,6 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import ProductGrid from './ProductGrid'
 import ReviewsList from './ReviewsList'
 import CommunityFeed from './CommunityFeed'
@@ -183,20 +184,30 @@ export default function ShopTabs({ activeTab, category, query, reviews, reviewCo
               </button>
             </form>
 
-            {/* Category filter dropdown */}
+            {/* Category filter dropdown. The native arrow sits flush against the
+                right edge, where the pill's curve clips it — so draw our own
+                inside the padding instead. */}
             <label htmlFor="category-filter" className="sr-only">Filter by category</label>
-            <select
-              id="category-filter"
-              value={category ?? ''}
-              onChange={e => setCategory(e.target.value || undefined)}
-              className="px-3 py-2 rounded-full text-xs font-medium border outline-none cursor-pointer"
-              style={{ borderColor: '#1a1040', color: '#1a1040', backgroundColor: 'white' }}
-            >
-              <option value="">All categories</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                id="category-filter"
+                value={category ?? ''}
+                onChange={e => setCategory(e.target.value || undefined)}
+                className="w-full appearance-none pl-4 pr-10 py-2 rounded-full text-xs font-medium border outline-none cursor-pointer"
+                style={{ borderColor: '#1a1040', color: '#1a1040', backgroundColor: 'white' }}
+              >
+                <option value="">All categories</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <ChevronDown
+                size={14}
+                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
+                style={{ color: '#1a1040' }}
+                aria-hidden="true"
+              />
+            </div>
           </div>
 
           {loading ? (

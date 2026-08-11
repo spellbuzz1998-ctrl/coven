@@ -1,5 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
   <rect width="400" height="400" fill="#2d1b6b"/>
-  <text x="200" y="190" text-anchor="middle" fill="#c9a84c" font-size="60">🔮</text>
-  <text x="200" y="240" text-anchor="middle" fill="#c9a84c" font-size="18" font-family="Georgia,serif">TheThirteenCoven</text>
+  <!-- Crystal ball drawn as shapes rather than an emoji, so it still renders
+       when the file is rasterised to a JPEG (no emoji font available there). -->
+  <circle cx="200" cy="180" r="58" fill="none" stroke="#c9a84c" stroke-width="4"/>
+  <circle cx="182" cy="162" r="16" fill="#ffffff" opacity="0.22"/>
+  <path d="M164 232 h72 l-10 22 h-52 z" fill="#c9a84c"/>
+  <text x="200" y="300" text-anchor="middle" fill="#c9a84c" font-size="20" font-family="Georgia,serif">TheThirteenCoven</text>
 </svg>
