@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { X } from 'lucide-react'
+import { X, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 
@@ -55,6 +55,8 @@ const ENABLED_PROVIDERS = new Set(
 )
 const SOCIAL_BUTTONS = ALL_SOCIAL_BUTTONS.filter(b => ENABLED_PROVIDERS.has(b.provider))
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+
 export default function AuthModal({ onClose, onSuccess }: Props) {
   const [tab, setTab] = useState<'signin' | 'register'>('signin')
   const [email, setEmail] = useState('')
@@ -64,6 +66,8 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
   const [socialLoading, setSocialLoading] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [resetSent, setResetSent] = useState(false)
+  const [linkLoading, setLinkLoading] = useState(false)
+  const [linkSent, setLinkSent] = useState(false)
   const supabase = createClient()
   const dialogRef = useRef<HTMLDivElement>(null)
 
@@ -116,6 +120,31 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
     } catch {
       setError('Could not create your account. Please check your connection and try again.')
       setLoading(false)
+    }
+  }
+
+  // Passwordless sign-in. Supabase emails a one-tap link; clicking it returns
+  // the customer here already signed in. Works with the email provider alone,
+  // so it needs no external OAuth setup.
+  async function handleMagicLink() {
+    if (linkLoading) return
+    if (!EMAIL_RE.test(email.trim())) {
+      setError('Enter your email address above, then tap "Email me a sign-in link".')
+      return
+    }
+    setLinkLoading(true)
+    setError('')
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: { emailRedirectTo: `${window.location.origin}/account` },
+      })
+      if (error) setError(error.message)
+      else setLinkSent(true)
+    } catch {
+      setError('Could not send the sign-in link. Please check your connection and try again.')
+    } finally {
+      setLinkLoading(false)
     }
   }
 
@@ -207,7 +236,7 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
                   id="auth-email"
                   type="email" required value={email}
                   autoComplete="email"
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={e => { setEmail(e.target.value); setLinkSent(false); setResetSent(false) }}
                   className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-gray-500"
                 />
               </div>
@@ -258,6 +287,12 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
                 </p>
               )}
 
+              {linkSent && (
+                <p className="text-sm px-3 py-2 rounded-lg" style={{ color: '#15803d', backgroundColor: '#f0fdf4' }} role="status">
+                  Sign-in link sent to {email.trim()} — check your email and tap the link.
+                </p>
+              )}
+
               {error && (
                 <p className="text-sm px-3 py-2 rounded-lg" style={{ color: '#b91c1c', backgroundColor: '#fef2f2' }} role="alert">{error}</p>
               )}
@@ -268,6 +303,18 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
                 style={{ backgroundColor: '#1a1040' }}
               >
                 {loading ? 'Please wait...' : tab === 'signin' ? 'Sign in' : 'Register'}
+              </button>
+
+              {/* One-tap alternative: no password to remember or reset. */}
+              <button
+                type="button"
+                onClick={handleMagicLink}
+                disabled={linkLoading || loading}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-full border-2 font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{ borderColor: '#1a1040', color: '#1a1040', backgroundColor: 'white' }}
+              >
+                <Mail size={16} aria-hidden="true" />
+                {linkLoading ? 'Sending link…' : 'Email me a sign-in link'}
               </button>
 
               {tab === 'signin' && (
