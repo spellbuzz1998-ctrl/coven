@@ -9,11 +9,27 @@ import type {
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-const EXPRESS_OPTIONS = {
-  buttonHeight: 44,
-  buttonTheme: { applePay: 'black', googlePay: 'black' },
-  layout: { maxColumns: 1, maxRows: 1 },
-} as const
+// Only the device's own wallet. Without pinning these to 'never', Stripe also
+// offers Link/PayPal/Klarna here and collapses the extras behind a "See more"
+// expander, which doesn't belong next to a single Add to cart button.
+function expressOptions(height: number) {
+  return {
+    buttonHeight: height,
+    // Pill shape, matching the Add to cart button beside it.
+    buttonBorderRadius: Math.round(height / 2),
+    buttonType: { applePay: 'buy', googlePay: 'buy' },
+    buttonTheme: { applePay: 'black', googlePay: 'black' },
+    layout: { maxColumns: 1, maxRows: 1, overflow: 'never' },
+    paymentMethods: {
+      applePay: 'always',
+      googlePay: 'always',
+      link: 'never',
+      paypal: 'never',
+      klarna: 'never',
+      amazonPay: 'never',
+    },
+  } as const
+}
 
 export interface ExpressLineItem {
   productId: string
@@ -26,13 +42,15 @@ interface Props {
   /** Charge amount in dollars — drives the sheet total. */
   amount: number
   item: ExpressLineItem
+  /** Pixel height, so the button matches the Add to cart beside it. */
+  height?: number
   /** Return false to block the sheet from opening (e.g. no variant chosen). */
   validate?: () => boolean
   onReady?: (hasWallet: boolean) => void
 }
 
 // `amount` is consumed by the Elements provider below, not in here.
-function ExpressInner({ item, validate, onReady }: Omit<Props, 'amount'>) {
+function ExpressInner({ item, height = 52, validate, onReady }: Omit<Props, 'amount'>) {
   const stripe = useStripe()
   const elements = useElements()
   const [error, setError] = useState('')
@@ -118,7 +136,7 @@ function ExpressInner({ item, validate, onReady }: Omit<Props, 'amount'>) {
         onClick={handleClick}
         onConfirm={handleConfirm}
         onReady={({ availablePaymentMethods }) => onReady?.(!!availablePaymentMethods)}
-        options={EXPRESS_OPTIONS}
+        options={expressOptions(height)}
       />
       {error && (
         <p className="text-xs mt-1.5" style={{ color: '#dc2626' }} role="alert">{error}</p>

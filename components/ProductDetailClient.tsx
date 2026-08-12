@@ -370,6 +370,7 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
                   <ExpressBuyButton
                     amount={activePrice}
                     item={expressItem}
+                    height={52}
                     validate={validateExpress}
                   />
                 </div>
@@ -480,6 +481,7 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
               <ExpressBuyButton
                 amount={activePrice}
                 item={expressItem}
+                height={44}
                 validate={validateExpress}
               />
             </div>
