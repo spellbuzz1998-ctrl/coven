@@ -50,15 +50,15 @@ function GoogleMark({ size = 15 }: { size?: number }) {
 function BuyLabel({ brand, fallback, compact = false }: { brand: WalletBrand; fallback: string; compact?: boolean }) {
   if (brand === 'applePay') {
     return (
-      <span className="inline-flex items-center gap-1.5">
-        {!compact && 'Buy with'}<AppleMark size={compact ? 17 : 15} />Pay
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        Buy with<AppleMark size={compact ? 16 : 15} />Pay
       </span>
     )
   }
   if (brand === 'googlePay') {
     return (
-      <span className="inline-flex items-center gap-1.5">
-        {!compact && 'Buy with'}<GoogleMark size={compact ? 17 : 15} />Pay
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        Buy with<GoogleMark size={compact ? 16 : 15} />Pay
       </span>
     )
   }
