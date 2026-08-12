@@ -167,8 +167,15 @@ export default function ExpressBuyButton(props: Props) {
         // Border radius lives on the Appearance API as a CSS string — the
         // element's own options have no such field, so setting it there is
         // silently ignored. Half the height gives the same pill as Add to cart.
+        //
+        // fontSizeBase matches the 14px of Add to cart's text-sm. Note that
+        // Safari draws the Apple Pay button itself and scales its label from
+        // the button height, so this may only take effect on Google Pay.
         appearance: {
-          variables: { buttonBorderRadius: `${Math.round((props.height ?? 52) / 2)}px` },
+          variables: {
+            buttonBorderRadius: `${Math.round((props.height ?? 52) / 2)}px`,
+            fontSizeBase: '14px',
+          },
         },
       }}
     >
