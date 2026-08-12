@@ -10,7 +10,6 @@ import ReviewsList from './ReviewsList'
 import ProductCard from './ProductCard'
 import { useRouter } from 'next/navigation'
 import { track } from '@/lib/track'
-import { useWalletBrand } from '@/lib/wallet'
 import ExpressBuyButton from './ExpressBuyButton'
 import { useAuth } from './AuthProvider'
 import AuthModal from './AuthModal'
@@ -189,8 +188,13 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
 
   // Reads the persisted cart in a hydration-safe way (0 on the server pass).
   const displayCartCount = useCartCount()
-  // Which express-pay wallet this device can actually complete a payment with.
-  const walletBrand = useWalletBrand(activePrice)
+
+  // Whether Stripe actually rendered a wallet button. Asking the device
+  // "do you have Apple Pay?" is not the same question — the express element
+  // also needs the domain registered with Stripe, so a device that says yes
+  // can still render nothing. Only Stripe's own onReady knows, so the plain
+  // button stays visible until it confirms, and there is never an empty slot.
+  const [walletReady, setWalletReady] = useState(false)
 
   // The single line the wallet sheet is buying — priced server-side on confirm.
   const expressItem = {
@@ -363,26 +367,29 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
                 <ShoppingCart size={16} />
                 {added ? '✓ Added!' : 'Add to cart'}
               </button>
-              {walletBrand ? (
-                // Real wallet button — opens the Apple Pay / Google Pay sheet
-                // here instead of routing through /checkout.
-                <div className="flex-1">
+              <div className="flex-1">
+                {/* Always mounted, but collapsed until Stripe reports a usable
+                    wallet — otherwise a device that claims Apple Pay but has no
+                    registered domain leaves this slot empty. */}
+                <div style={walletReady ? undefined : { height: 0, overflow: 'hidden' }}>
                   <ExpressBuyButton
                     amount={activePrice}
                     item={expressItem}
                     height={52}
                     validate={validateExpress}
+                    onReady={setWalletReady}
                   />
                 </div>
-              ) : (
-                <button
-                  onClick={handleBuyNow}
-                  className="flex-1 py-3.5 rounded-full font-bold text-sm btn-press flex items-center justify-center"
-                  style={{ backgroundColor: '#1a1040', color: 'white' }}
-                >
-                  Buy it now
-                </button>
-              )}
+                {!walletReady && (
+                  <button
+                    onClick={handleBuyNow}
+                    className="w-full py-3.5 rounded-full font-bold text-sm btn-press flex items-center justify-center"
+                    style={{ backgroundColor: '#1a1040', color: 'white' }}
+                  >
+                    Buy it now
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Digital badge */}
@@ -476,7 +483,7 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
           >
             {added ? '✓ Added!' : 'Add to cart'}
           </button>
-          {walletBrand ? (
+          {walletReady ? (
             <div className="shrink-0 w-[150px]">
               <ExpressBuyButton
                 amount={activePrice}
