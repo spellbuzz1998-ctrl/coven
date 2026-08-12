@@ -9,20 +9,20 @@ import type {
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-// Only the device's own wallet. Without pinning these to 'never', Stripe also
-// offers Link/PayPal/Klarna here and collapses the extras behind a "See more"
-// expander, which doesn't belong next to a single Add to cart button.
+// Deliberately minimal. An earlier version also set layout.maxRows/overflow,
+// buttonType and paymentMethods.applePay:'always' all at once, and the button
+// stopped rendering entirely — so only the options needed to drop the
+// "See more" expander are set, and applePay/googlePay are left on their
+// 'auto' default rather than being forced.
+//
+// 'never' on the others is what removes the expander: without it Stripe also
+// offers Link/PayPal/Klarna here and hides the overflow behind "See more".
 function expressOptions(height: number) {
   return {
     buttonHeight: height,
-    // Pill shape, matching the Add to cart button beside it.
     buttonBorderRadius: Math.round(height / 2),
-    buttonType: { applePay: 'buy', googlePay: 'buy' },
     buttonTheme: { applePay: 'black', googlePay: 'black' },
-    layout: { maxColumns: 1, maxRows: 1, overflow: 'never' },
     paymentMethods: {
-      applePay: 'always',
-      googlePay: 'always',
       link: 'never',
       paypal: 'never',
       klarna: 'never',
