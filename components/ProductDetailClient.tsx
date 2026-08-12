@@ -10,6 +10,7 @@ import ReviewsList from './ReviewsList'
 import ProductCard from './ProductCard'
 import { useRouter } from 'next/navigation'
 import { track } from '@/lib/track'
+import { useWalletBrand, type WalletBrand } from '@/lib/wallet'
 import { useAuth } from './AuthProvider'
 import AuthModal from './AuthModal'
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from '@/lib/watchlist'
@@ -24,6 +25,45 @@ interface Props {
 }
 
 const TESTIMONIAL_CARD_W = 'clamp(200px, 65vw, 280px)'
+
+function AppleMark({ size = 15 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" aria-hidden="true">
+      <path d="M17.05 12.04c-.02-2.23 1.82-3.3 1.9-3.35-1.04-1.52-2.65-1.73-3.22-1.75-1.37-.14-2.67.81-3.36.81-.69 0-1.76-.79-2.9-.77-1.49.02-2.87.87-3.64 2.2-1.55 2.69-.4 6.67 1.11 8.85.74 1.07 1.62 2.27 2.78 2.23 1.11-.05 1.53-.72 2.88-.72 1.34 0 1.72.72 2.9.7 1.2-.02 1.96-1.09 2.69-2.17.85-1.24 1.2-2.44 1.22-2.5-.03-.01-2.34-.9-2.36-3.56zM14.9 5.2c.61-.74 1.02-1.77.91-2.8-.88.04-1.94.59-2.57 1.33-.56.65-1.06 1.7-.93 2.7.98.08 1.98-.5 2.59-1.23z" />
+    </svg>
+  )
+}
+
+function GoogleMark({ size = 15 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
+      <path fill="#4285F4" d="M23.5 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.47a5.54 5.54 0 0 1-2.4 3.58v2.98h3.86c2.26-2.09 3.57-5.17 3.57-8.8z" />
+      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-2.98c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.28v3.09A11.99 11.99 0 0 0 12 24z" />
+      <path fill="#FBBC05" d="M5.27 14.31a7.2 7.2 0 0 1 0-4.6V6.62H1.28a12 12 0 0 0 0 10.78l3.99-3.09z" />
+      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.7 0 3.99 2.47 1.28 6.62l3.99 3.09C6.22 6.86 8.87 4.75 12 4.75z" />
+    </svg>
+  )
+}
+
+// Etsy-style express label: shows the wallet the visitor can actually use, and
+// falls back to the plain wording when no wallet is available.
+function BuyLabel({ brand, fallback, compact = false }: { brand: WalletBrand; fallback: string; compact?: boolean }) {
+  if (brand === 'applePay') {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        {!compact && 'Buy with'}<AppleMark size={compact ? 14 : 15} />Pay
+      </span>
+    )
+  }
+  if (brand === 'googlePay') {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        {!compact && 'Buy with'}<GoogleMark size={compact ? 14 : 15} />Pay
+      </span>
+    )
+  }
+  return <>{fallback}</>
+}
 
 // Static copy — defined once at module scope instead of rebuilt on every render.
 const PRODUCT_INFO_SECTIONS = [
@@ -187,6 +227,8 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
 
   // Reads the persisted cart in a hydration-safe way (0 on the server pass).
   const displayCartCount = useCartCount()
+  // Which express-pay wallet this device can actually complete a payment with.
+  const walletBrand = useWalletBrand(activePrice)
   const [scrollDir, setScrollDir] = useState<'up' | 'down'>('up')
   useEffect(() => {
     track('product_view', { productSlug: product.slug, productTitle: product.title })
@@ -343,10 +385,10 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
               </button>
               <button
                 onClick={handleBuyNow}
-                className="flex-1 py-3.5 rounded-full font-bold text-sm btn-press"
+                className="flex-1 py-3.5 rounded-full font-bold text-sm btn-press flex items-center justify-center"
                 style={{ backgroundColor: '#1a1040', color: 'white' }}
               >
-                Buy it now
+                <BuyLabel brand={walletBrand} fallback="Buy it now" />
               </button>
             </div>
 
@@ -443,10 +485,10 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
           </button>
           <button
             onClick={handleBuyNow}
-            className="shrink-0 px-5 py-2.5 rounded-full font-bold text-white transition-all"
+            className="shrink-0 px-5 py-2.5 rounded-full font-bold text-white transition-all flex items-center justify-center"
             style={{ backgroundColor: '#1a1040', fontSize: 13 }}
           >
-            Buy now
+            <BuyLabel brand={walletBrand} fallback="Buy now" compact />
           </button>
         </div>
 
