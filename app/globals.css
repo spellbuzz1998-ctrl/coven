@@ -11,6 +11,19 @@ body {
   box-sizing: border-box;
 }
 
+/* iOS Safari zooms the whole page in when you focus a control whose text is
+   smaller than 16px, and does not zoom back out afterwards. Bumping just the
+   mobile size prevents it; desktop keeps the smaller type.
+   !important because these have to beat Tailwind's text-sm/text-xs utilities,
+   which a bare element selector cannot outrank on specificity. */
+@media (max-width: 767px) {
+  input:not([type='checkbox']):not([type='radio']),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 /* Many inputs use `outline-none` for styling; this restores a visible focus
    indicator for keyboard users without bringing back the mouse-click outline. */
 :focus-visible {

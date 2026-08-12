@@ -220,8 +220,17 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
     const onScroll = () => {
       const y = window.scrollY
       if (Math.abs(y - lastY) < 4) return
-      setScrollDir(y > lastY ? 'down' : 'up')
+      const scrollingDown = y > lastY
+      setScrollDir(scrollingDown ? 'down' : 'up')
       lastY = y
+
+      // Scrolling down past a focused field means the shopper has moved on, so
+      // let the on-screen keyboard go. Without this it stays up over the buy
+      // buttons for the rest of the page.
+      if (scrollingDown) {
+        const el = document.activeElement
+        if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) el.blur()
+      }
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
