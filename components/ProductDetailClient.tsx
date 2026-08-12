@@ -491,7 +491,11 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
       <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4">
         {/* Cart bar — shown when scrolling down */}
         <div
-          className="flex items-center justify-center gap-3 rounded-full px-3 py-2 shadow-2xl transition-all duration-300"
+          // Only opacity/transform may animate. `transition-all` also animated
+          // pointer-events, which flips at the halfway point of the fade — for
+          // ~150ms after each direction change the visible bar was unclickable
+          // and the hidden one swallowed taps.
+          className="flex items-center justify-center gap-3 rounded-full px-3 py-2 shadow-2xl transition-[opacity,transform] duration-300"
           style={{
             backgroundColor: 'white',
             boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
@@ -530,7 +534,7 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
 
         {/* Home nav — shown when scrolling up */}
         <nav
-          className="flex items-center justify-around rounded-full px-3 py-1.5 transition-all duration-300"
+          className="flex items-center justify-around rounded-full px-3 py-1.5 transition-[opacity,transform] duration-300"
           style={{
             backgroundColor: 'white',
             boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
