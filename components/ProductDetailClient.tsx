@@ -51,14 +51,14 @@ function BuyLabel({ brand, fallback, compact = false }: { brand: WalletBrand; fa
   if (brand === 'applePay') {
     return (
       <span className="inline-flex items-center gap-1.5">
-        {!compact && 'Buy with'}<AppleMark size={compact ? 14 : 15} />Pay
+        {!compact && 'Buy with'}<AppleMark size={compact ? 17 : 15} />Pay
       </span>
     )
   }
   if (brand === 'googlePay') {
     return (
       <span className="inline-flex items-center gap-1.5">
-        {!compact && 'Buy with'}<GoogleMark size={compact ? 14 : 15} />Pay
+        {!compact && 'Buy with'}<GoogleMark size={compact ? 17 : 15} />Pay
       </span>
     )
   }
@@ -485,8 +485,10 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
           </button>
           <button
             onClick={handleBuyNow}
-            className="shrink-0 px-5 py-2.5 rounded-full font-bold text-white transition-all flex items-center justify-center"
-            style={{ backgroundColor: '#1a1040', fontSize: 13 }}
+            // min-width keeps the wallet variant the same size as "Add to cart" —
+            // " Pay" is far shorter text and would otherwise look shrunken.
+            className="shrink-0 min-w-[125px] px-5 py-2.5 rounded-full font-bold text-white transition-all flex items-center justify-center border-2"
+            style={{ backgroundColor: '#1a1040', borderColor: '#1a1040', fontSize: 13 }}
           >
             <BuyLabel brand={walletBrand} fallback="Buy now" compact />
           </button>
