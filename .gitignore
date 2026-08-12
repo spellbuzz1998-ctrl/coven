@@ -48,3 +48,6 @@ next-env.d.ts
 /data/*.db-wal
 # seed.json is safe to commit — it contains products/settings, not customer data.
 !/data/seed.json
+
+# macOS leaves these behind when a file write is interrupted
+.!*!*
