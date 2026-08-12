@@ -220,20 +220,36 @@ export default function ProductDetailClient({ product, reviews, shopStats, relat
     const onScroll = () => {
       const y = window.scrollY
       if (Math.abs(y - lastY) < 4) return
-      const scrollingDown = y > lastY
-      setScrollDir(scrollingDown ? 'down' : 'up')
+      setScrollDir(y > lastY ? 'down' : 'up')
       lastY = y
+    }
 
-      // Scrolling down past a focused field means the shopper has moved on, so
-      // let the on-screen keyboard go. Without this it stays up over the buy
-      // buttons for the rest of the page.
-      if (scrollingDown) {
+    // Dismiss the on-screen keyboard when the shopper drags the page down past
+    // a field they were filling in.
+    //
+    // Driven by touch rather than scroll on purpose: opening the keyboard makes
+    // iOS scroll the page by itself, and reacting to that blurred the field the
+    // instant it was tapped — which is why it took two taps to type anything.
+    // A touchmove only ever comes from a real finger.
+    let touchStartY = 0
+    const onTouchStart = (e: TouchEvent) => { touchStartY = e.touches[0]?.clientY ?? 0 }
+    const onTouchMove = (e: TouchEvent) => {
+      const y = e.touches[0]?.clientY ?? 0
+      // Finger travelling up the screen drags the content downwards.
+      if (touchStartY - y > 24) {
         const el = document.activeElement
         if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) el.blur()
       }
     }
+
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    window.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('touchmove', onTouchMove, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchmove', onTouchMove)
+    }
   }, [product.slug, product.title])
 
   function handleBuyNow() {
