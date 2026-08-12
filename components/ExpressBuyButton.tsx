@@ -20,7 +20,6 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 function expressOptions(height: number) {
   return {
     buttonHeight: height,
-    buttonBorderRadius: Math.round(height / 2),
     buttonTheme: { applePay: 'black', googlePay: 'black' },
     paymentMethods: {
       link: 'never',
@@ -163,6 +162,12 @@ export default function ExpressBuyButton(props: Props) {
         mode: 'payment',
         amount: Math.max(Math.round(props.amount * 100), 50),
         currency: 'usd',
+        // Border radius lives on the Appearance API as a CSS string — the
+        // element's own options have no such field, so setting it there is
+        // silently ignored. Half the height gives the same pill as Add to cart.
+        appearance: {
+          variables: { buttonBorderRadius: `${Math.round((props.height ?? 52) / 2)}px` },
+        },
       }}
     >
       <ExpressInner {...props} />
