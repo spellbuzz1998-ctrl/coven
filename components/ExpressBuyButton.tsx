@@ -9,17 +9,19 @@ import type {
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-// Deliberately minimal. An earlier version also set layout.maxRows/overflow,
-// buttonType and paymentMethods.applePay:'always' all at once, and the button
-// stopped rendering entirely — so only the options needed to drop the
-// "See more" expander are set, and applePay/googlePay are left on their
-// 'auto' default rather than being forced.
+// Kept deliberately small. An earlier version set layout.maxRows/overflow and
+// paymentMethods.applePay:'always' as well, and the button stopped rendering
+// altogether — so applePay/googlePay stay on their 'auto' default and nothing
+// here forces them to appear.
 //
-// 'never' on the others is what removes the expander: without it Stripe also
-// offers Link/PayPal/Klarna here and hides the overflow behind "See more".
+// 'never' on the rest is what removes the "See more" expander: without it
+// Stripe also offers Link/PayPal/Klarna and hides the overflow behind it.
+//
+// buttonType 'buy' renders "Buy with  Pay" rather than the bare " Pay".
 function expressOptions(height: number) {
   return {
     buttonHeight: height,
+    buttonType: { applePay: 'buy', googlePay: 'buy' },
     buttonTheme: { applePay: 'black', googlePay: 'black' },
     paymentMethods: {
       link: 'never',
